@@ -1,0 +1,817 @@
+{
+ "actions": [],
+ "creation": "2024-12-19 10:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company_tab",
+  "company_section",
+  "company_address",
+  "company_logo",
+  "column_break_4",
+  "company_phone",
+  "company_email",
+  "company_website",
+  "currency_tab",
+  "currency_section",
+  "default_currency",
+  "currency_symbol",
+  "currency_position",
+  "column_break_currency",
+  "number_format",
+  "pricing_section",
+  "tax_rate",
+  "include_tax_in_price",
+  "tax_label",
+  "column_break_pricing",
+  "minimum_booking_amount",
+  "deposit_percentage",
+  "payment_terms",
+  "booking_tab",
+  "business_hours_section",
+  "business_start_time",
+  "business_end_time",
+  "first_day_of_week",
+  "column_break_business",
+  "saturday",
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "booking_settings_section",
+  "time_slot_duration",
+  "advance_booking_days",
+  "max_days_in_advance",
+  "column_break_booking",
+  "allow_cancellation",
+  "cancellation_hours",
+  "booking_buffer_time",
+  "auto_confirm_bookings",
+  "booking_steps_section",
+  "enable_service_selection",
+  "enable_agent_selection",
+  "enable_date_time_selection",
+  "column_break_steps",
+  "enable_customer_info",
+  "enable_customer_dashboard",
+  "enable_agent_dashboard",
+  "notifications_tab",
+  "notification_section",
+  "send_confirmation_email",
+  "send_reminder_email",
+  "send_sms_notifications",
+  "send_email_notifications",
+  "column_break_notifications",
+  "reminder_hours",
+  "admin_email",
+  "sms_api_key",
+  "email_template",
+  "print_tab",
+  "print_section",
+  "show_company_logo",
+  "show_company_name",
+  "show_print_date",
+  "show_page_numbers",
+  "custom_footer_text",
+  "column_break_print",
+  "booking_print_format",
+  "include_customer_details",
+  "include_service_details",
+  "include_photographer_details",
+  "include_payment_details",
+  "include_notes",
+  "show_qr_code",
+  "receipt_section",
+  "receipt_format",
+  "receipt_paper_size",
+  "receipt_font_size",
+  "column_break_receipt",
+  "auto_print_receipt",
+  "receipt_copies",
+  "thermal_printer_settings",
+  "pdf_section",
+  "pdf_page_size",
+  "pdf_orientation",
+  "pdf_margins",
+  "column_break_pdf",
+  "pdf_font",
+  "pdf_font_size",
+  "enable_watermark",
+  "watermark_text",
+  "system_tab",
+  "localization_section",
+  "country",
+  "timezone",
+  "language",
+  "column_break_localization",
+  "date_format",
+  "time_format",
+  "time_system",
+  "disable_verbose_date_output",
+  "status_section",
+  "default_status",
+  "statuses_that_block_timeslot",
+  "additional_statuses",
+  "column_break_status",
+  "statuses_that_appear_on_pending_page",
+  "statuses_hidden_on_calendar"
+ ],
+ "fields": [
+  {
+   "fieldname": "company_tab",
+   "fieldtype": "Tab Break",
+   "label": "\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0634\u0631\u0643\u0629"
+  },
+  {
+   "fieldname": "company_section",
+   "fieldtype": "Section Break",
+   "label": "\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0634\u0631\u0643\u0629"
+  },
+  {
+   "fieldname": "company_logo",
+   "fieldtype": "Attach Image",
+   "label": "\u0634\u0639\u0627\u0631 \u0627\u0644\u0634\u0631\u0643\u0629"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company_address",
+   "fieldtype": "Small Text",
+   "label": "\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0634\u0631\u0643\u0629"
+  },
+  {
+   "fieldname": "company_phone",
+   "fieldtype": "Data",
+   "label": "\u0647\u0627\u062a\u0641 \u0627\u0644\u0634\u0631\u0643\u0629"
+  },
+  {
+   "fieldname": "company_email",
+   "fieldtype": "Data",
+   "label": "\u0628\u0631\u064a\u062f \u0627\u0644\u0634\u0631\u0643\u0629 \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a"
+  },
+  {
+   "fieldname": "company_website",
+   "fieldtype": "Data",
+   "label": "\u0645\u0648\u0642\u0639 \u0627\u0644\u0634\u0631\u0643\u0629 \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a"
+  },
+  {
+   "fieldname": "currency_tab",
+   "fieldtype": "Tab Break",
+   "label": "\u0627\u0644\u0639\u0645\u0644\u0629 \u0648\u0627\u0644\u062a\u0633\u0639\u064a\u0631"
+  },
+  {
+   "fieldname": "currency_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0629"
+  },
+  {
+   "fieldname": "default_currency",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "\u0627\u0644\u0639\u0645\u0644\u0629 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0629",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency_symbol",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "\u0631\u0645\u0632 \u0627\u0644\u0639\u0645\u0644\u0629",
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency_position",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "\u0645\u0648\u0636\u0639 \u0631\u0645\u0632 \u0627\u0644\u0639\u0645\u0644\u0629",
+   "options": "Left\nRight",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_currency",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "#,###.##",
+   "fieldname": "number_format",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "\u062a\u0646\u0633\u064a\u0642 \u0627\u0644\u0623\u0631\u0642\u0627\u0645",
+   "reqd": 1
+  },
+  {
+   "fieldname": "pricing_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062a\u0633\u0639\u064a\u0631"
+  },
+  {
+   "default": "15",
+   "fieldname": "tax_rate",
+   "fieldtype": "Float",
+   "label": "\u0645\u0639\u062f\u0644 \u0627\u0644\u0636\u0631\u064a\u0628\u0629 (%)",
+   "precision": "2"
+  },
+  {
+   "default": "0",
+   "fieldname": "include_tax_in_price",
+   "fieldtype": "Check",
+   "label": "\u062a\u0636\u0645\u064a\u0646 \u0627\u0644\u0636\u0631\u064a\u0628\u0629 \u0641\u064a \u0627\u0644\u0633\u0639\u0631"
+  },
+  {
+   "default": "\u0636\u0631\u064a\u0628\u0629 \u0627\u0644\u0642\u064a\u0645\u0629 \u0627\u0644\u0645\u0636\u0627\u0641\u0629",
+   "fieldname": "tax_label",
+   "fieldtype": "Data",
+   "label": "\u062a\u0633\u0645\u064a\u0629 \u0627\u0644\u0636\u0631\u064a\u0628\u0629"
+  },
+  {
+   "fieldname": "column_break_pricing",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "100",
+   "fieldname": "minimum_booking_amount",
+   "fieldtype": "Currency",
+   "label": "\u0627\u0644\u062d\u062f \u0627\u0644\u0623\u062f\u0646\u0649 \u0644\u0645\u0628\u0644\u063a \u0627\u0644\u062d\u062c\u0632"
+  },
+  {
+   "default": "30",
+   "fieldname": "deposit_percentage",
+   "fieldtype": "Float",
+   "label": "\u0646\u0633\u0628\u0629 \u0627\u0644\u0639\u0631\u0628\u0648\u0646 (%)",
+   "precision": "2"
+  },
+  {
+   "default": "\u064a\u062c\u0628 \u062f\u0641\u0639 30% \u0639\u0631\u0628\u0648\u0646 \u0639\u0646\u062f \u0627\u0644\u062d\u062c\u0632 \u0648\u0627\u0644\u0628\u0627\u0642\u064a \u0639\u0646\u062f \u0627\u0644\u062a\u0633\u0644\u064a\u0645",
+   "fieldname": "payment_terms",
+   "fieldtype": "Small Text",
+   "label": "\u0634\u0631\u0648\u0637 \u0627\u0644\u062f\u0641\u0639"
+  },
+  {
+   "fieldname": "booking_tab",
+   "fieldtype": "Tab Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062d\u062c\u0632"
+  },
+  {
+   "fieldname": "business_hours_section",
+   "fieldtype": "Section Break",
+   "label": "\u0633\u0627\u0639\u0627\u062a \u0627\u0644\u0639\u0645\u0644"
+  },
+  {
+   "default": "09:00:00",
+   "fieldname": "business_start_time",
+   "fieldtype": "Time",
+   "label": "\u0648\u0642\u062a \u0628\u062f\u0627\u064a\u0629 \u0627\u0644\u0639\u0645\u0644"
+  },
+  {
+   "default": "18:00:00",
+   "fieldname": "business_end_time",
+   "fieldtype": "Time",
+   "label": "\u0648\u0642\u062a \u0646\u0647\u0627\u064a\u0629 \u0627\u0644\u0639\u0645\u0644"
+  },
+  {
+   "default": "Sunday",
+   "fieldname": "first_day_of_week",
+   "fieldtype": "Select",
+   "label": "\u0623\u0648\u0644 \u064a\u0648\u0645 \u0641\u064a \u0627\u0644\u0623\u0633\u0628\u0648\u0639",
+   "options": "Sunday\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_business",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "saturday",
+   "fieldtype": "Check",
+   "label": "\u0627\u0644\u0633\u0628\u062a"
+  },
+  {
+   "default": "1",
+   "fieldname": "sunday",
+   "fieldtype": "Check",
+   "label": "\u0627\u0644\u0623\u062d\u062f"
+  },
+  {
+   "default": "1",
+   "fieldname": "monday",
+   "fieldtype": "Check",
+   "label": "\u0627\u0644\u0627\u062b\u0646\u064a\u0646"
+  },
+  {
+   "default": "1",
+   "fieldname": "tuesday",
+   "fieldtype": "Check",
+   "label": "\u0627\u0644\u062b\u0644\u0627\u062b\u0627\u0621"
+  },
+  {
+   "default": "1",
+   "fieldname": "wednesday",
+   "fieldtype": "Check",
+   "label": "\u0627\u0644\u0623\u0631\u0628\u0639\u0627\u0621"
+  },
+  {
+   "default": "1",
+   "fieldname": "thursday",
+   "fieldtype": "Check",
+   "label": "\u0627\u0644\u062e\u0645\u064a\u0633"
+  },
+  {
+   "default": "1",
+   "fieldname": "friday",
+   "fieldtype": "Check",
+   "label": "\u0627\u0644\u062c\u0645\u0639\u0629"
+  },
+  {
+   "fieldname": "booking_settings_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062d\u062c\u0632"
+  },
+  {
+   "default": "60",
+   "fieldname": "time_slot_duration",
+   "fieldtype": "Int",
+   "label": "\u0645\u062f\u0629 \u0627\u0644\u0641\u062a\u0631\u0629 \u0627\u0644\u0632\u0645\u0646\u064a\u0629 (\u062f\u0642\u064a\u0642\u0629)",
+   "reqd": 1
+  },
+  {
+   "default": "30",
+   "fieldname": "advance_booking_days",
+   "fieldtype": "Int",
+   "label": "\u0623\u064a\u0627\u0645 \u0627\u0644\u062d\u062c\u0632 \u0627\u0644\u0645\u0633\u0628\u0642",
+   "reqd": 1
+  },
+  {
+   "default": "90",
+   "fieldname": "max_days_in_advance",
+   "fieldtype": "Int",
+   "label": "\u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649 \u0644\u0644\u0623\u064a\u0627\u0645 \u0627\u0644\u0645\u0633\u0628\u0642\u0629"
+  },
+  {
+   "fieldname": "column_break_booking",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "allow_cancellation",
+   "fieldtype": "Check",
+   "label": "\u0627\u0644\u0633\u0645\u0627\u062d \u0628\u0627\u0644\u0625\u0644\u063a\u0627\u0621"
+  },
+  {
+   "default": "24",
+   "fieldname": "cancellation_hours",
+   "fieldtype": "Int",
+   "label": "\u0633\u0627\u0639\u0627\u062a \u0627\u0644\u0625\u0644\u063a\u0627\u0621 \u0642\u0628\u0644 \u0627\u0644\u0645\u0648\u0639\u062f"
+  },
+  {
+   "default": "0",
+   "description": "\u0641\u062a\u0631\u0629 \u0632\u0645\u0646\u064a\u0629 \u0625\u0636\u0627\u0641\u064a\u0629 \u0628\u064a\u0646 \u0627\u0644\u062d\u062c\u0648\u0632\u0627\u062a \u0628\u0627\u0644\u062f\u0642\u0627\u0626\u0642",
+   "fieldname": "booking_buffer_time",
+   "fieldtype": "Int",
+   "label": "\u0648\u0642\u062a \u0627\u0644\u0641\u0627\u0635\u0644 \u0628\u064a\u0646 \u0627\u0644\u062d\u062c\u0648\u0632\u0627\u062a"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_confirm_bookings",
+   "fieldtype": "Check",
+   "label": "\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u062d\u062c\u0648\u0632\u0627\u062a \u062a\u0644\u0642\u0627\u0626\u064a\u0627\u064b"
+  },
+  {
+   "fieldname": "booking_steps_section",
+   "fieldtype": "Section Break",
+   "label": "\u062e\u0637\u0648\u0627\u062a \u0627\u0644\u062d\u062c\u0632"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_service_selection",
+   "fieldtype": "Check",
+   "label": "\u062a\u0641\u0639\u064a\u0644 \u0627\u062e\u062a\u064a\u0627\u0631 \u0627\u0644\u062e\u062f\u0645\u0629"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_agent_selection",
+   "fieldtype": "Check",
+   "label": "\u062a\u0641\u0639\u064a\u0644 \u0627\u062e\u062a\u064a\u0627\u0631 \u0627\u0644\u0645\u0635\u0648\u0631"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_date_time_selection",
+   "fieldtype": "Check",
+   "label": "\u062a\u0641\u0639\u064a\u0644 \u0627\u062e\u062a\u064a\u0627\u0631 \u0627\u0644\u062a\u0627\u0631\u064a\u062e \u0648\u0627\u0644\u0648\u0642\u062a"
+  },
+  {
+   "fieldname": "column_break_steps",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_customer_info",
+   "fieldtype": "Check",
+   "label": "\u062a\u0641\u0639\u064a\u0644 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0639\u0645\u064a\u0644"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_customer_dashboard",
+   "fieldtype": "Check",
+   "label": "\u062a\u0641\u0639\u064a\u0644 \u0644\u0648\u062d\u0629 \u062a\u062d\u0643\u0645 \u0627\u0644\u0639\u0645\u064a\u0644"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_agent_dashboard",
+   "fieldtype": "Check",
+   "label": "\u062a\u0641\u0639\u064a\u0644 \u0644\u0648\u062d\u0629 \u062a\u062d\u0643\u0645 \u0627\u0644\u0645\u0635\u0648\u0631"
+  },
+  {
+   "fieldname": "notifications_tab",
+   "fieldtype": "Tab Break",
+   "label": "\u0627\u0644\u0625\u0634\u0639\u0627\u0631\u0627\u062a"
+  },
+  {
+   "fieldname": "notification_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0625\u0634\u0639\u0627\u0631\u0627\u062a"
+  },
+  {
+   "default": "1",
+   "fieldname": "send_confirmation_email",
+   "fieldtype": "Check",
+   "label": "\u0625\u0631\u0633\u0627\u0644 \u0628\u0631\u064a\u062f \u062a\u0623\u0643\u064a\u062f"
+  },
+  {
+   "default": "1",
+   "fieldname": "send_reminder_email",
+   "fieldtype": "Check",
+   "label": "\u0625\u0631\u0633\u0627\u0644 \u0628\u0631\u064a\u062f \u062a\u0630\u0643\u064a\u0631"
+  },
+  {
+   "default": "1",
+   "fieldname": "send_sms_notifications",
+   "fieldtype": "Check",
+   "label": "\u0625\u0631\u0633\u0627\u0644 \u0625\u0634\u0639\u0627\u0631\u0627\u062a SMS"
+  },
+  {
+   "default": "1",
+   "fieldname": "send_email_notifications",
+   "fieldtype": "Check",
+   "label": "\u0625\u0631\u0633\u0627\u0644 \u0625\u0634\u0639\u0627\u0631\u0627\u062a \u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a"
+  },
+  {
+   "fieldname": "column_break_notifications",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "24",
+   "fieldname": "reminder_hours",
+   "fieldtype": "Int",
+   "label": "\u0633\u0627\u0639\u0627\u062a \u0627\u0644\u062a\u0630\u0643\u064a\u0631"
+  },
+  {
+   "fieldname": "admin_email",
+   "fieldtype": "Data",
+   "label": "\u0628\u0631\u064a\u062f \u0627\u0644\u0645\u062f\u064a\u0631 \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a"
+  },
+  {
+   "fieldname": "sms_api_key",
+   "fieldtype": "Password",
+   "label": "\u0645\u0641\u062a\u0627\u062d API \u0644\u0644\u0631\u0633\u0627\u0626\u0644 \u0627\u0644\u0646\u0635\u064a\u0629"
+  },
+  {
+   "fieldname": "email_template",
+   "fieldtype": "Link",
+   "label": "\u0642\u0627\u0644\u0628 \u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "print_tab",
+   "fieldtype": "Tab Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0637\u0628\u0627\u0639\u0629"
+  },
+  {
+   "fieldname": "print_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0637\u0628\u0627\u0639\u0629 \u0627\u0644\u0639\u0627\u0645\u0629"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_company_logo",
+   "fieldtype": "Check",
+   "label": "\u0625\u0638\u0647\u0627\u0631 \u0634\u0639\u0627\u0631 \u0627\u0644\u0634\u0631\u0643\u0629"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_company_name",
+   "fieldtype": "Check",
+   "label": "\u0625\u0638\u0647\u0627\u0631 \u0627\u0633\u0645 \u0627\u0644\u0634\u0631\u0643\u0629"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_print_date",
+   "fieldtype": "Check",
+   "label": "\u0625\u0638\u0647\u0627\u0631 \u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0637\u0628\u0627\u0639\u0629"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_page_numbers",
+   "fieldtype": "Check",
+   "label": "\u0625\u0638\u0647\u0627\u0631 \u0623\u0631\u0642\u0627\u0645 \u0627\u0644\u0635\u0641\u062d\u0627\u062a"
+  },
+  {
+   "fieldname": "column_break_print",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Standard",
+   "fieldname": "booking_print_format",
+   "fieldtype": "Select",
+   "label": "\u062a\u0646\u0633\u064a\u0642 \u0637\u0628\u0627\u0639\u0629 \u0627\u0644\u062d\u062c\u0632",
+   "options": "Standard\nDetailed\nCompact"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_customer_details",
+   "fieldtype": "Check",
+   "label": "\u062a\u0636\u0645\u064a\u0646 \u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u0639\u0645\u064a\u0644"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_service_details",
+   "fieldtype": "Check",
+   "label": "\u062a\u0636\u0645\u064a\u0646 \u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u062e\u062f\u0645\u0629"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_photographer_details",
+   "fieldtype": "Check",
+   "label": "\u062a\u0636\u0645\u064a\u0646 \u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u0645\u0635\u0648\u0631"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_payment_details",
+   "fieldtype": "Check",
+   "label": "\u062a\u0636\u0645\u064a\u0646 \u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u062f\u0641\u0639"
+  },
+  {
+   "default": "0",
+   "fieldname": "include_notes",
+   "fieldtype": "Check",
+   "label": "\u062a\u0636\u0645\u064a\u0646 \u0627\u0644\u0645\u0644\u0627\u062d\u0638\u0627\u062a"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_qr_code",
+   "fieldtype": "Check",
+   "label": "\u0625\u0638\u0647\u0627\u0631 \u0631\u0645\u0632 QR"
+  },
+  {
+   "fieldname": "custom_footer_text",
+   "fieldtype": "Small Text",
+   "label": "\u0646\u0635 \u0627\u0644\u062a\u0630\u064a\u064a\u0644 \u0627\u0644\u0645\u062e\u0635\u0635"
+  },
+  {
+   "fieldname": "receipt_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0625\u064a\u0635\u0627\u0644\u0627\u062a"
+  },
+  {
+   "default": "Thermal",
+   "fieldname": "receipt_format",
+   "fieldtype": "Select",
+   "label": "\u062a\u0646\u0633\u064a\u0642 \u0627\u0644\u0625\u064a\u0635\u0627\u0644",
+   "options": "Thermal\nA4\nA5"
+  },
+  {
+   "default": "80mm",
+   "fieldname": "receipt_paper_size",
+   "fieldtype": "Select",
+   "label": "\u062d\u062c\u0645 \u0648\u0631\u0642 \u0627\u0644\u0625\u064a\u0635\u0627\u0644",
+   "options": "58mm\n80mm\nA4\nA5"
+  },
+  {
+   "default": "12",
+   "fieldname": "receipt_font_size",
+   "fieldtype": "Int",
+   "label": "\u062d\u062c\u0645 \u062e\u0637 \u0627\u0644\u0625\u064a\u0635\u0627\u0644"
+  },
+  {
+   "fieldname": "column_break_receipt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_print_receipt",
+   "fieldtype": "Check",
+   "label": "\u0637\u0628\u0627\u0639\u0629 \u0627\u0644\u0625\u064a\u0635\u0627\u0644 \u062a\u0644\u0642\u0627\u0626\u064a\u0627\u064b"
+  },
+  {
+   "default": "1",
+   "fieldname": "receipt_copies",
+   "fieldtype": "Int",
+   "label": "\u0639\u062f\u062f \u0646\u0633\u062e \u0627\u0644\u0625\u064a\u0635\u0627\u0644"
+  },
+  {
+   "fieldname": "thermal_printer_settings",
+   "fieldtype": "Small Text",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0637\u0627\u0628\u0639\u0629 \u0627\u0644\u062d\u0631\u0627\u0631\u064a\u0629"
+  },
+  {
+   "fieldname": "pdf_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a PDF"
+  },
+  {
+   "default": "A4",
+   "fieldname": "pdf_page_size",
+   "fieldtype": "Select",
+   "label": "\u062d\u062c\u0645 \u0635\u0641\u062d\u0629 PDF",
+   "options": "A4\nA5\nLetter\nLegal"
+  },
+  {
+   "default": "Portrait",
+   "fieldname": "pdf_orientation",
+   "fieldtype": "Select",
+   "label": "\u0627\u062a\u062c\u0627\u0647 \u0635\u0641\u062d\u0629 PDF",
+   "options": "Portrait\nLandscape"
+  },
+  {
+   "default": "20mm",
+   "fieldname": "pdf_margins",
+   "fieldtype": "Data",
+   "label": "\u0647\u0648\u0627\u0645\u0634 PDF"
+  },
+  {
+   "fieldname": "column_break_pdf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Arial",
+   "fieldname": "pdf_font",
+   "fieldtype": "Data",
+   "label": "\u062e\u0637 PDF"
+  },
+  {
+   "default": "12",
+   "fieldname": "pdf_font_size",
+   "fieldtype": "Int",
+   "label": "\u062d\u062c\u0645 \u062e\u0637 PDF"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_watermark",
+   "fieldtype": "Check",
+   "label": "\u062a\u0641\u0639\u064a\u0644 \u0627\u0644\u0639\u0644\u0627\u0645\u0629 \u0627\u0644\u0645\u0627\u0626\u064a\u0629"
+  },
+  {
+   "fieldname": "watermark_text",
+   "fieldtype": "Data",
+   "label": "\u0646\u0635 \u0627\u0644\u0639\u0644\u0627\u0645\u0629 \u0627\u0644\u0645\u0627\u0626\u064a\u0629"
+  },
+  {
+   "fieldname": "system_tab",
+   "fieldtype": "Tab Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0646\u0638\u0627\u0645"
+  },
+  {
+   "fieldname": "localization_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062a\u0648\u0637\u064a\u0646"
+  },
+  {
+   "default": "Saudi Arabia",
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "\u0627\u0644\u0628\u0644\u062f",
+   "options": "Country"
+  },
+  {
+   "default": "Asia/Riyadh",
+   "fieldname": "timezone",
+   "fieldtype": "Select",
+   "label": "\u0627\u0644\u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u0632\u0645\u0646\u064a\u0629",
+   "options": "Asia/Riyadh\nAsia/Dubai\nAsia/Kuwait\nAsia/Qatar\nAsia/Bahrain\nAfrica/Cairo\nAsia/Baghdad"
+  },
+  {
+   "default": "ar",
+   "fieldname": "language",
+   "fieldtype": "Select",
+   "label": "\u0627\u0644\u0644\u063a\u0629",
+   "options": "ar\nen\nfr\nes\nde\nit\npt\nru\nzh\nja\nko",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_localization",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "dd-mm-yyyy",
+   "fieldname": "date_format",
+   "fieldtype": "Select",
+   "label": "\u062a\u0646\u0633\u064a\u0642 \u0627\u0644\u062a\u0627\u0631\u064a\u062e",
+   "options": "dd-mm-yyyy\nmm-dd-yyyy\nyyyy-mm-dd\ndd/mm/yyyy\nmm/dd/yyyy\nyyyy/mm/dd",
+   "reqd": 1
+  },
+  {
+   "default": "HH:mm",
+   "fieldname": "time_format",
+   "fieldtype": "Select",
+   "label": "\u062a\u0646\u0633\u064a\u0642 \u0627\u0644\u0648\u0642\u062a",
+   "options": "HH:mm\nhh:mm a\nHH:mm:ss\nhh:mm:ss a",
+   "reqd": 1
+  },
+  {
+   "default": "24 Hour",
+   "fieldname": "time_system",
+   "fieldtype": "Select",
+   "label": "\u0646\u0638\u0627\u0645 \u0627\u0644\u0648\u0642\u062a",
+   "options": "12 Hour\n24 Hour"
+  },
+  {
+   "default": "0",
+   "description": "\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0627\u0644\u0631\u0642\u0645 \u0628\u062f\u0644\u0627\u064b \u0645\u0646 \u0627\u0633\u0645 \u0627\u0644\u0634\u0647\u0631 \u0639\u0646\u062f \u0639\u0631\u0636 \u0627\u0644\u062a\u0648\u0627\u0631\u064a\u062e",
+   "fieldname": "disable_verbose_date_output",
+   "fieldtype": "Check",
+   "label": "\u062a\u0639\u0637\u064a\u0644 \u0639\u0631\u0636 \u0627\u0644\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0645\u0641\u0635\u0644"
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062d\u0627\u0644\u0627\u062a"
+  },
+  {
+   "default": "Pending Approval",
+   "fieldname": "default_status",
+   "fieldtype": "Select",
+   "label": "\u0627\u0644\u062d\u0627\u0644\u0629 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0629",
+   "options": "Pending Approval\nApproved\nCancelled\nCompleted\nNo Show",
+   "reqd": 1
+  },
+  {
+   "description": "\u0642\u0627\u0626\u0645\u0629 \u0628\u0627\u0644\u062d\u0627\u0644\u0627\u062a \u0645\u0641\u0635\u0648\u0644\u0629 \u0628\u0641\u0648\u0627\u0635\u0644",
+   "fieldname": "statuses_that_block_timeslot",
+   "fieldtype": "Small Text",
+   "label": "\u0627\u0644\u062d\u0627\u0644\u0627\u062a \u0627\u0644\u062a\u064a \u062a\u062d\u062c\u0628 \u0627\u0644\u0641\u062a\u0631\u0629 \u0627\u0644\u0632\u0645\u0646\u064a\u0629"
+  },
+  {
+   "fieldname": "column_break_status",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "\u0642\u0627\u0626\u0645\u0629 \u0628\u0627\u0644\u062d\u0627\u0644\u0627\u062a \u0645\u0641\u0635\u0648\u0644\u0629 \u0628\u0641\u0648\u0627\u0635\u0644",
+   "fieldname": "statuses_that_appear_on_pending_page",
+   "fieldtype": "Small Text",
+   "label": "\u0627\u0644\u062d\u0627\u0644\u0627\u062a \u0627\u0644\u062a\u064a \u062a\u0638\u0647\u0631 \u0641\u064a \u0635\u0641\u062d\u0629 \u0627\u0644\u0627\u0646\u062a\u0638\u0627\u0631"
+  },
+  {
+   "description": "\u0642\u0627\u0626\u0645\u0629 \u0628\u0627\u0644\u062d\u0627\u0644\u0627\u062a \u0645\u0641\u0635\u0648\u0644\u0629 \u0628\u0641\u0648\u0627\u0635\u0644",
+   "fieldname": "statuses_hidden_on_calendar",
+   "fieldtype": "Small Text",
+   "label": "\u0627\u0644\u062d\u0627\u0644\u0627\u062a \u0627\u0644\u0645\u062e\u0641\u064a\u0629 \u0641\u064a \u0627\u0644\u062a\u0642\u0648\u064a\u0645"
+  },
+  {
+   "description": "\u062d\u0627\u0644\u0627\u062a \u0625\u0636\u0627\u0641\u064a\u0629 \u0645\u062e\u0635\u0635\u0629 \u0645\u0641\u0635\u0648\u0644\u0629 \u0628\u0641\u0648\u0627\u0635\u0644",
+   "fieldname": "additional_statuses",
+   "fieldtype": "Small Text",
+   "label": "\u062d\u0627\u0644\u0627\u062a \u0625\u0636\u0627\u0641\u064a\u0629"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-08-04 22:45:41.716686",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "General Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Re Studio Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,298 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-08-03 19:56:37.991552",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "photographer",
+  "week_start_date",
+  "column_break_1",
+  "status",
+  "section_break_1",
+  "monday_working",
+  "monday_from",
+  "monday_to",
+  "section_break_2",
+  "tuesday_working",
+  "tuesday_from",
+  "tuesday_to",
+  "section_break_3",
+  "wednesday_working",
+  "wednesday_from",
+  "wednesday_to",
+  "section_break_4",
+  "thursday_working",
+  "thursday_from",
+  "thursday_to",
+  "section_break_5",
+  "friday_working",
+  "friday_from",
+  "friday_to",
+  "section_break_6",
+  "saturday_working",
+  "saturday_from",
+  "saturday_to",
+  "section_break_7",
+  "sunday_working",
+  "sunday_from",
+  "sunday_to",
+  "section_break_8",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "photographer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Photographer",
+   "options": "Photographer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "week_start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Week Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nActive\nInactive",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break",
+   "label": "Monday"
+  },
+  {
+   "default": "1",
+   "fieldname": "monday_working",
+   "fieldtype": "Check",
+   "label": "Working on Monday"
+  },
+  {
+   "default": "09:00:00",
+   "depends_on": "monday_working",
+   "fieldname": "monday_from",
+   "fieldtype": "Time",
+   "label": "Monday From"
+  },
+  {
+   "default": "17:00:00",
+   "depends_on": "monday_working",
+   "fieldname": "monday_to",
+   "fieldtype": "Time",
+   "label": "Monday To"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break",
+   "label": "Tuesday"
+  },
+  {
+   "default": "1",
+   "fieldname": "tuesday_working",
+   "fieldtype": "Check",
+   "label": "Working on Tuesday"
+  },
+  {
+   "default": "09:00:00",
+   "depends_on": "tuesday_working",
+   "fieldname": "tuesday_from",
+   "fieldtype": "Time",
+   "label": "Tuesday From"
+  },
+  {
+   "default": "17:00:00",
+   "depends_on": "tuesday_working",
+   "fieldname": "tuesday_to",
+   "fieldtype": "Time",
+   "label": "Tuesday To"
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break",
+   "label": "Wednesday"
+  },
+  {
+   "default": "1",
+   "fieldname": "wednesday_working",
+   "fieldtype": "Check",
+   "label": "Working on Wednesday"
+  },
+  {
+   "default": "09:00:00",
+   "depends_on": "wednesday_working",
+   "fieldname": "wednesday_from",
+   "fieldtype": "Time",
+   "label": "Wednesday From"
+  },
+  {
+   "default": "17:00:00",
+   "depends_on": "wednesday_working",
+   "fieldname": "wednesday_to",
+   "fieldtype": "Time",
+   "label": "Wednesday To"
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break",
+   "label": "Thursday"
+  },
+  {
+   "default": "1",
+   "fieldname": "thursday_working",
+   "fieldtype": "Check",
+   "label": "Working on Thursday"
+  },
+  {
+   "default": "09:00:00",
+   "depends_on": "thursday_working",
+   "fieldname": "thursday_from",
+   "fieldtype": "Time",
+   "label": "Thursday From"
+  },
+  {
+   "default": "17:00:00",
+   "depends_on": "thursday_working",
+   "fieldname": "thursday_to",
+   "fieldtype": "Time",
+   "label": "Thursday To"
+  },
+  {
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break",
+   "label": "Friday"
+  },
+  {
+   "default": "1",
+   "fieldname": "friday_working",
+   "fieldtype": "Check",
+   "label": "Working on Friday"
+  },
+  {
+   "default": "09:00:00",
+   "depends_on": "friday_working",
+   "fieldname": "friday_from",
+   "fieldtype": "Time",
+   "label": "Friday From"
+  },
+  {
+   "default": "17:00:00",
+   "depends_on": "friday_working",
+   "fieldname": "friday_to",
+   "fieldtype": "Time",
+   "label": "Friday To"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break",
+   "label": "Saturday"
+  },
+  {
+   "default": "1",
+   "fieldname": "saturday_working",
+   "fieldtype": "Check",
+   "label": "Working on Saturday"
+  },
+  {
+   "default": "09:00:00",
+   "depends_on": "saturday_working",
+   "fieldname": "saturday_from",
+   "fieldtype": "Time",
+   "label": "Saturday From"
+  },
+  {
+   "default": "17:00:00",
+   "depends_on": "saturday_working",
+   "fieldname": "saturday_to",
+   "fieldtype": "Time",
+   "label": "Saturday To"
+  },
+  {
+   "fieldname": "section_break_7",
+   "fieldtype": "Section Break",
+   "label": "Sunday"
+  },
+  {
+   "default": "1",
+   "fieldname": "sunday_working",
+   "fieldtype": "Check",
+   "label": "Working on Sunday"
+  },
+  {
+   "default": "09:00:00",
+   "depends_on": "sunday_working",
+   "fieldname": "sunday_from",
+   "fieldtype": "Time",
+   "label": "Sunday From"
+  },
+  {
+   "default": "17:00:00",
+   "depends_on": "sunday_working",
+   "fieldname": "sunday_to",
+   "fieldtype": "Time",
+   "label": "Sunday To"
+  },
+  {
+   "fieldname": "section_break_8",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-08-03 19:56:37.991552",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "Photographer Schedule",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "photographer"
+}

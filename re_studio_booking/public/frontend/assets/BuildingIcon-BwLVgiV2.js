@@ -1,0 +1,2 @@
+import{y as o,a,o as n,b as r}from"./index-DIJ6DGae.js";const t={},l={fill:"currentColor",viewBox:"0 0 20 20",xmlns:"http://www.w3.org/2000/svg"};function s(c,e){return n(),a("svg",l,[...e[0]||(e[0]=[r("path",{"fill-rule":"evenodd",d:"M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z","clip-rule":"evenodd"},null,-1)])])}const d=o(t,[["render",s]]);export{d as default};
+//# sourceMappingURL=BuildingIcon-BwLVgiV2.js.map

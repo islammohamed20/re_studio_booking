@@ -1,0 +1,257 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:service_name_en",
+ "creation": "2023-08-01 10:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "details_tab",
+  "basic_info_section",
+  "service_name_en",
+  "category",
+  "column_break_5",
+  "is_active",
+  "description_section",
+  "image",
+  "duration_pricing_tab",
+  "duration_section",
+  "duration",
+  "min_duration",
+  "max_duration",
+  "column_break_duration",
+  "duration_unit",
+  "is_flexible_duration",
+  "pricing_section",
+  "price",
+    "is_mandatory",
+  "settings_tab",
+  "availability_section",
+  "available_times",
+  "booking_settings_section",
+  "max_bookings_per_day",
+  "requires_approval",
+  "column_break_booking",
+  "send_notifications"
+ ],
+ "fields": [
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "\u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644"
+  },
+  {
+   "fieldname": "basic_info_section",
+   "fieldtype": "Section Break",
+   "label": "\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0629"
+  },
+  {
+   "fieldname": "service_name_en",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "\u0627\u0633\u0645 \u0627\u0644\u062e\u062f\u0645\u0629",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "\u0627\u0644\u0641\u0626\u0629",
+   "options": "Category",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "\u0646\u0634\u0637"
+  },
+  {
+   "fieldname": "description_section",
+   "fieldtype": "Section Break",
+   "label": "\u0627\u0644\u0648\u0635\u0641"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "\u0627\u0644\u0635\u0648\u0631\u0629"
+  },
+  {
+   "fieldname": "duration_pricing_tab",
+   "fieldtype": "Tab Break",
+   "label": "\u0627\u0644\u0645\u062f\u0629 \u0648\u0627\u0644\u062a\u0633\u0639\u064a\u0631"
+  },
+  {
+   "fieldname": "duration_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0645\u062f\u0629"
+  },
+  {
+   "fieldname": "duration",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "\u0627\u0644\u0645\u062f\u0629 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0629 (\u0633\u0627\u0639\u0629)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "min_duration",
+   "fieldtype": "Int",
+   "label": "\u0627\u0644\u062d\u062f \u0627\u0644\u0623\u062f\u0646\u0649 \u0644\u0644\u0645\u062f\u0629 (\u062f\u0642\u0627\u0626\u0642)"
+  },
+  {
+   "fieldname": "max_duration",
+   "fieldtype": "Int",
+   "label": "\u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649 \u0644\u0644\u0645\u062f\u0629 (\u062f\u0642\u0627\u0626\u0642)"
+  },
+  {
+   "fieldname": "column_break_duration",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "\u062f\u0642\u064a\u0642\u0629",
+   "fieldname": "duration_unit",
+   "fieldtype": "Select",
+   "label": "\u0648\u062d\u062f\u0629 \u0627\u0644\u0645\u062f\u0629",
+   "options": "\u062f\u0642\u064a\u0642\u0629\n\u0633\u0627\u0639\u0629\n\u064a\u0648\u0645"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_flexible_duration",
+   "fieldtype": "Check",
+   "label": "\u0645\u062f\u0629 \u0645\u0631\u0646\u0629"
+  },
+  {
+   "fieldname": "pricing_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062a\u0633\u0639\u064a\u0631"
+  },
+  {
+   "fieldname": "price",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0623\u0633\u0627\u0633\u064a",
+   "options": "SAR",
+   "reqd": 1
+  },
+    {
+     "default": "0",
+     "fieldname": "is_mandatory",
+     "fieldtype": "Check",
+     "label": "\u0625\u062c\u0628\u0627\u0631\u064a",
+     "description": "\u062a\u062d\u062f\u064a\u062f \u0623\u0646 \u0647\u0630\u0647 \u0627\u0644\u062e\u062f\u0645\u0629 \u0625\u062c\u0628\u0627\u0631\u064a\u0629 \u062f\u0627\u062e\u0644 \u0627\u0644\u0628\u0627\u0642\u0629"
+    },
+  {
+   "fieldname": "column_break_pricing",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "\u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a"
+  },
+  {
+   "fieldname": "availability_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062a\u0648\u0641\u0631"
+  },
+  {
+   "fieldname": "available_times",
+   "fieldtype": "Table",
+   "label": "\u0627\u0644\u0623\u0648\u0642\u0627\u062a \u0627\u0644\u0645\u062a\u0627\u062d\u0629",
+   "options": "Service Time Slot"
+  },
+  {
+   "fieldname": "booking_settings_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062d\u062c\u0632"
+  },
+  {
+   "default": "0",
+   "fieldname": "max_bookings_per_day",
+   "fieldtype": "Int",
+   "label": "\u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649 \u0644\u0644\u062d\u062c\u0648\u0632\u0627\u062a \u064a\u0648\u0645\u064a\u0627\u064b"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_approval",
+   "fieldtype": "Check",
+   "label": "\u064a\u062a\u0637\u0644\u0628 \u0645\u0648\u0627\u0641\u0642\u0629"
+  },
+  {
+   "fieldname": "column_break_booking",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "send_notifications",
+   "fieldtype": "Check",
+   "label": "\u0625\u0631\u0633\u0627\u0644 \u0625\u0634\u0639\u0627\u0631\u0627\u062a"
+  }
+ ],
+ "links": [],
+ "modified": "2025-08-28 18:02:10.553658",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "Service",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Agent"
+  },
+  {
+   "read": 1,
+   "role": "Guest"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

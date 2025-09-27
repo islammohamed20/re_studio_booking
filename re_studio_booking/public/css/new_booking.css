@@ -1,0 +1,103 @@
+/* New Booking Page - External Styles (Desktop Focus)
+   Separation of presentation from template markup. */
+
+:root {
+  --brand-primary: #dc2626;
+  --brand-primary-dark: #b91c1c;
+  --brand-bg-soft: #f8fafc;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.06);
+  --shadow-md: 0 6px 18px rgba(0,0,0,0.08);
+  --shadow-focus: 0 0 0 3px rgba(220,38,38,0.25);
+  --transition: 0.25s cubic-bezier(.4,0,.2,1);
+  --font-base: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+}
+
+body.new-booking-page { font-family: var(--font-base); }
+
+/* Grid Enhancement (desktop) */
+@media (min-width: 1200px) {
+  .form-container.booking-grid-enabled { 
+    display: grid; 
+    grid-template-columns: 340px 1fr 1fr; 
+    grid-auto-rows: min-content; 
+    grid-template-areas: 
+      'summary left middle'
+      'summary right right'
+      'summary status status'
+      'summary notes notes'
+      'summary actions actions';
+    gap: 32px; 
+    align-items: start;
+    position: relative;
+  }
+  .booking-summary-panel { grid-area: summary; }
+  .grid-area-left { grid-area: left; }
+  .grid-area-middle { grid-area: middle; }
+  .grid-area-right { grid-area: right; }
+  .grid-area-status { grid-area: status; }
+  .grid-area-notes { grid-area: notes; }
+  .grid-area-actions { grid-area: actions; }
+}
+
+/* Summary Panel */
+.booking-summary-panel { 
+  background: linear-gradient(155deg,#ffffff 0%,#f3f4f6 90%);
+  border: 1px solid rgba(220,38,38,0.12);
+  border-radius: var(--radius-lg);
+  padding: 22px 22px 18px 22px; 
+  box-shadow: 0 10px 28px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
+  position: sticky; 
+  top: 12px; 
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  display: flex; 
+  flex-direction: column;
+  gap: 14px;
+  animation: fadeInSummary .5s ease;
+  direction: rtl;
+}
+
+.booking-summary-panel::-webkit-scrollbar { width: 6px; }
+.booking-summary-panel::-webkit-scrollbar-track { background: transparent; }
+.booking-summary-panel::-webkit-scrollbar-thumb { background: rgba(220,38,38,0.35); border-radius: 4px; }
+.booking-summary-panel:hover::-webkit-scrollbar-thumb { background: rgba(220,38,38,0.6); }
+
+.summary-title { 
+  font-size: 1.1rem; 
+  margin: 0 0 6px 0; 
+  display:flex; 
+  align-items:center; 
+  gap:8px; 
+  font-weight:600; 
+  color:#1f2937;
+  border-bottom:2px solid var(--brand-primary); 
+  padding-bottom:6px; 
+}
+.summary-title i { color: var(--brand-primary); }
+
+.summary-body { display: flex; flex-direction: column; gap: 10px; }
+.summary-group { display:flex; justify-content:space-between; gap:12px; font-size:0.85rem; line-height:1.4; }
+.summary-label { color:#374151; font-weight:600; white-space:nowrap; }
+.summary-value { color:#111827; font-weight:500; text-align:left; direction:ltr; }
+.summary-separator { height:1px; background:linear-gradient(90deg, transparent, rgba(220,38,38,0.4), transparent); margin:4px 0; }
+.summary-footer { margin-top:4px; text-align:center; font-size:0.65rem; }
+
+/* Emphasis for monetary values */
+#summary-total { font-size:0.95rem; font-weight:700; color: var(--brand-primary-dark); }
+#summary-deposit { font-weight:600; color:#b45309; }
+#summary-paid { font-weight:600; color:#059669; }
+
+/* Activation (shown once JS loads) */
+.booking-summary-panel.active { display:block !important; }
+
+/* Fade animation */
+@keyframes fadeInSummary { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform: translateY(0);} }
+
+/* Small utility adjustments */
+.actions-section button { min-width:170px; }
+
+/* Responsive: hide summary panel automatically on narrow widths */
+@media (max-width: 1199px) { .booking-summary-panel { display:none !important; } }

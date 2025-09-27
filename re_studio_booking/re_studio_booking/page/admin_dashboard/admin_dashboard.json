@@ -1,0 +1,26 @@
+{
+ "content": null,
+ "creation": "2023-06-15 10:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2023-06-15 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "admin-dashboard",
+ "owner": "Administrator",
+ "page_name": "admin-dashboard",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Administrator"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Re Studio Admin Dashboard"
+}

@@ -1,0 +1,57 @@
+{% extends "templates/web.html" %}
+
+{% block title %}لوحة التحكم الإدارية - Re Studio Booking{% endblock %}
+
+{% block head_include %}
+<style>
+	body {
+		font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+		direction: rtl;
+		background: #f8f9fa;
+	}
+	
+	.admin-wrapper {
+		min-height: 100vh;
+	}
+	
+	/* Additional custom styles will be loaded from JS */
+</style>
+
+<!-- Chart.js for data visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Moment.js for date formatting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/ar.min.js"></script>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- Arabic font -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block page_content %}
+<div class="admin-wrapper">
+	<!-- This will be dynamically populated by JavaScript -->
+	<div id="admin-dashboard-loading" class="text-center" style="padding: 50px;">
+		<div class="spinner-border" role="status">
+			<span class="sr-only">جاري التحميل...</span>
+		</div>
+		<p>جاري تحميل لوحة التحكم الإدارية...</p>
+	</div>
+</div>
+
+<script>
+// Set moment locale to Arabic
+moment.locale('ar');
+
+// Initialize when document is ready
+$(document).ready(function() {
+	// Remove loading indicator when page is fully loaded
+	setTimeout(function() {
+		$('#admin-dashboard-loading').fadeOut();
+	}, 1000);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,2 @@
+import{y as o,a as r,o as t,b as n}from"./index-DIJ6DGae.js";const s={},a={fill:"currentColor",viewBox:"0 0 20 20",xmlns:"http://www.w3.org/2000/svg"};function l(c,e){return t(),r("svg",a,[...e[0]||(e[0]=[n("path",{"fill-rule":"evenodd",d:"M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z","clip-rule":"evenodd"},null,-1)])])}const f=o(s,[["render",l]]);export{f as default};
+//# sourceMappingURL=PlusIcon-EoVKCuIm.js.map

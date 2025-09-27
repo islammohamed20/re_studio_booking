@@ -1,0 +1,227 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-01-15 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "user_section",
+  "user",
+  "full_name",
+  "email",
+  "column_break_1",
+  "role",
+  "department",
+  "phone",
+  "notification_section",
+  "enable_email_notifications",
+  "enable_sms_notifications",
+  "column_break_2",
+  "enable_booking_notifications",
+  "enable_payment_notifications",
+  "preferences_section",
+  "default_language",
+  "timezone",
+  "column_break_3",
+  "date_format",
+  "time_format",
+  "security_section",
+  "two_factor_auth",
+  "session_timeout",
+  "column_break_4",
+  "password_expiry_days",
+  "login_attempts"
+ ],
+ "fields": [
+  {
+   "fieldname": "user_section",
+   "fieldtype": "Section Break",
+   "label": "User Information"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "user.full_name",
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "Full Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "user.email",
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "label": "Primary Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Data",
+   "label": "Department"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone Number"
+  },
+  {
+   "fieldname": "notification_section",
+   "fieldtype": "Section Break",
+   "label": "Notification Settings"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_email_notifications",
+   "fieldtype": "Check",
+   "label": "Enable Email Notifications"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_sms_notifications",
+   "fieldtype": "Check",
+   "label": "Enable SMS Notifications"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_booking_notifications",
+   "fieldtype": "Check",
+   "label": "Booking Notifications"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_payment_notifications",
+   "fieldtype": "Check",
+   "label": "Payment Notifications"
+  },
+  {
+   "fieldname": "preferences_section",
+   "fieldtype": "Section Break",
+   "label": "User Preferences"
+  },
+  {
+   "default": "ar",
+   "fieldname": "default_language",
+   "fieldtype": "Select",
+   "label": "Default Language",
+   "options": "ar\nen\nfr\nes"
+  },
+  {
+   "default": "Asia/Riyadh",
+   "fieldname": "timezone",
+   "fieldtype": "Select",
+   "label": "Timezone",
+   "options": "Asia/Riyadh\nAsia/Dubai\nEurope/London\nAmerica/New_York"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "dd-mm-yyyy",
+   "fieldname": "date_format",
+   "fieldtype": "Select",
+   "label": "Date Format",
+   "options": "dd-mm-yyyy\nmm-dd-yyyy\nyyyy-mm-dd\ndd/mm/yyyy\nmm/dd/yyyy"
+  },
+  {
+   "default": "HH:mm",
+   "fieldname": "time_format",
+   "fieldtype": "Select",
+   "label": "Time Format",
+   "options": "HH:mm\nHH:mm:ss\nhh:mm A\nhh:mm:ss A"
+  },
+  {
+   "fieldname": "security_section",
+   "fieldtype": "Section Break",
+   "label": "Security Settings"
+  },
+  {
+   "default": "0",
+   "fieldname": "two_factor_auth",
+   "fieldtype": "Check",
+   "label": "Enable Two Factor Authentication"
+  },
+  {
+   "default": "480",
+   "fieldname": "session_timeout",
+   "fieldtype": "Int",
+   "label": "Session Timeout (minutes)"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "90",
+   "fieldname": "password_expiry_days",
+   "fieldtype": "Int",
+   "label": "Password Expiry (days)"
+  },
+  {
+   "default": "5",
+   "fieldname": "login_attempts",
+   "fieldtype": "Int",
+   "label": "Max Login Attempts"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-01-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "User Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

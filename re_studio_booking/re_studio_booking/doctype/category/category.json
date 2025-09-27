@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:category_name_en",
+ "creation": "2023-08-01 10:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "category_name_en",
+  "column_break_3",
+  "icon",
+  "color",
+  "section_break_6",
+  "description",
+  "sort_order"
+ ],
+ "fields": [
+  {
+   "fieldname": "category_name_en",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "\u0627\u0633\u0645 \u0627\u0644\u0641\u0626\u0629 (\u0625\u0646\u062c\u0644\u064a\u0632\u064a)",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "camera",
+   "description": "\u0623\u064a\u0642\u0648\u0646\u0629 FontAwesome",
+   "fieldname": "icon",
+   "fieldtype": "Data",
+   "label": "\u0627\u0644\u0623\u064a\u0642\u0648\u0646\u0629"
+  },
+  {
+   "default": "#4e73df",
+   "fieldname": "color",
+   "fieldtype": "Color",
+   "label": "\u0627\u0644\u0644\u0648\u0646"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "\u0627\u0644\u0648\u0635\u0641"
+  },
+  {
+   "default": "10",
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "\u062a\u0631\u062a\u064a\u0628 \u0627\u0644\u0638\u0647\u0648\u0631"
+  }
+ ],
+ "links": [],
+ "modified": "2025-08-03 09:27:03.743066",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "Category",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Agent"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

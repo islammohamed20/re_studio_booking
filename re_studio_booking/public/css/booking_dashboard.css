@@ -1,0 +1,350 @@
+/* Booking Dashboard Specific Styles */
+/* Using unified theme variables for consistency */
+
+/* Dashboard Layout */
+.booking-dashboard-content {
+    background-color: var(--surface-gray-1);
+    min-height: 100vh;
+}
+
+/* Statistics Cards */
+.stats-card {
+    background: var(--surface-white);
+    border: 1px solid var(--outline-gray-3);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+}
+
+.stats-card-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.stats-card-icon.primary {
+    background-color: var(--surface-primary-1);
+    color: var(--primary-color);
+}
+
+.stats-card-icon.secondary {
+    background-color: var(--surface-secondary-1);
+    color: var(--secondary-color);
+}
+
+.stats-card-icon.success {
+    background-color: var(--surface-success-1);
+    color: var(--success-color);
+}
+
+.stats-card-icon.warning {
+    background-color: var(--surface-warning-1);
+    color: var(--warning-color);
+}
+
+.stats-card-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--ink-gray-9);
+    line-height: 1.2;
+}
+
+.stats-card-label {
+    font-size: 0.875rem;
+    color: var(--ink-gray-6);
+    font-weight: 500;
+}
+
+.stats-card-change {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.stats-card-change.positive {
+    color: var(--success-color);
+}
+
+.stats-card-change.negative {
+    color: var(--error-color);
+}
+
+/* Chart Containers */
+.chart-container {
+    background: var(--surface-white);
+    border: 1px solid var(--outline-gray-3);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--outline-gray-2);
+}
+
+.chart-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--ink-gray-9);
+}
+
+.chart-subtitle {
+    font-size: 0.875rem;
+    color: var(--ink-gray-6);
+    margin-top: 0.25rem;
+}
+
+/* Recent Bookings List */
+.booking-item {
+    background: var(--surface-white);
+    border: 1px solid var(--outline-gray-2);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: all 0.2s ease;
+    margin-bottom: 0.75rem;
+}
+
+.booking-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.booking-item-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.booking-item-title {
+    font-weight: 600;
+    color: var(--ink-gray-9);
+    font-size: 1rem;
+}
+
+.booking-item-subtitle {
+    color: var(--ink-gray-6);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.booking-item-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+}
+
+.booking-item-price {
+    font-weight: 600;
+    color: var(--ink-gray-9);
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-badge.confirmed {
+    background-color: var(--surface-success-1);
+    color: var(--success-color);
+}
+
+.status-badge.pending {
+    background-color: var(--surface-warning-1);
+    color: var(--warning-color);
+}
+
+.status-badge.cancelled {
+    background-color: var(--surface-error-1);
+    color: var(--error-color);
+}
+
+.status-badge.scheduled {
+    background-color: var(--surface-primary-1);
+    color: var(--primary-color);
+}
+
+/* Action Buttons */
+.dashboard-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.dashboard-btn:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: var(--primary-color);
+    ring-offset: 2px;
+}
+
+.dashboard-btn.primary {
+    background-color: var(--primary-color);
+    color: var(--surface-white);
+}
+
+.dashboard-btn.primary:hover {
+    background-color: var(--primary-color-dark);
+}
+
+.dashboard-btn.secondary {
+    background-color: var(--surface-gray-2);
+    color: var(--ink-gray-7);
+}
+
+.dashboard-btn.secondary:hover {
+    background-color: var(--surface-gray-3);
+    color: var(--ink-gray-9);
+}
+
+/* Loading States */
+.loading-skeleton {
+    background: linear-gradient(90deg, var(--surface-gray-2) 25%, var(--surface-gray-3) 50%, var(--surface-gray-2) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .chart-container {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .booking-dashboard-content {
+        padding: 1rem;
+    }
+    
+    .stats-card {
+        padding: 1rem;
+    }
+    
+    .chart-container {
+        padding: 0.75rem;
+    }
+    
+    .booking-item {
+        padding: 0.75rem;
+    }
+    
+    .booking-item-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .booking-item-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
+    
+    .stats-card-value {
+        font-size: 1.5rem;
+    }
+    
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .booking-dashboard-content {
+        background: white;
+    }
+    
+    .stats-card,
+    .chart-container,
+    .booking-item {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    
+    .dashboard-btn {
+        display: none;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .stats-card,
+    .chart-container,
+    .booking-item {
+        border-width: 2px;
+    }
+    
+    .status-badge {
+        border: 1px solid currentColor;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .stats-card,
+    .booking-item,
+    .dashboard-btn {
+        transition: none;
+    }
+    
+    .loading-skeleton {
+        animation: none;
+    }
+}

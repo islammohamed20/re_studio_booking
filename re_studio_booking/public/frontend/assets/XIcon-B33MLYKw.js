@@ -1,0 +1,2 @@
+import{y as e,a as t,o as n,b as r}from"./index-DIJ6DGae.js";const s={},c={xmlns:"http://www.w3.org/2000/svg",fill:"none",viewBox:"0 0 24 24","stroke-width":"1.5",stroke:"currentColor",class:"w-6 h-6"};function l(a,o){return n(),t("svg",c,[...o[0]||(o[0]=[r("path",{"stroke-linecap":"round","stroke-linejoin":"round",d:"M6 18 18 6M6 6l12 12"},null,-1)])])}const d=e(s,[["render",l]]);export{d as default};
+//# sourceMappingURL=XIcon-B33MLYKw.js.map

@@ -1,0 +1,194 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:first_name",
+ "creation": "2023-08-01 10:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_info_section",
+  "first_name",
+  "last_name",
+  "full_name",
+  "phone",
+  "column_break_6",
+  "status",
+  "join_date",
+  "studio_name",
+  "user_account",
+  "professional_info_section",
+  "specialization",
+  "years_of_experience",
+  "column_break_13",
+  "b2b",
+  "discount_percentage",
+  "services_section",
+  "services",
+  "schedule_section",
+  "working_hours"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_info_section",
+   "fieldtype": "Section Break",
+   "label": "\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0629"
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "\u0627\u0644\u0627\u0633\u0645",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "\u0627\u0644\u0627\u0633\u0645 \u0627\u0644\u0643\u0627\u0645\u0644",
+   "read_only": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "\u0631\u0642\u0645 \u0627\u0644\u0647\u0627\u062a\u0641",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "\u0627\u0644\u062d\u0627\u0644\u0629",
+   "options": "Active\nOn Leave\nInactive"
+  },
+  {
+   "default": "Today",
+   "fieldname": "join_date",
+   "fieldtype": "Date",
+   "label": "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0627\u0646\u0636\u0645\u0627\u0645"
+  },
+  {
+   "fieldname": "professional_info_section",
+   "fieldtype": "Section Break",
+   "label": "\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0645\u0647\u0646\u064a\u0629"
+  },
+  {
+   "fieldname": "specialization",
+   "fieldtype": "Data",
+   "label": "\u0627\u0644\u062a\u062e\u0635\u0635"
+  },
+  {
+   "fieldname": "years_of_experience",
+   "fieldtype": "Int",
+   "label": "\u0633\u0646\u0648\u0627\u062a \u0627\u0644\u062e\u0628\u0631\u0629"
+  },
+  {
+   "fieldname": "column_break_13",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "b2b",
+   "fieldtype": "Check",
+   "label": "B2B"
+  },
+  {
+   "depends_on": "eval:doc.b2b==1",
+   "fieldname": "discount_percentage",
+   "fieldtype": "Percent",
+   "label": "\u0646\u0633\u0628\u0629 \u0627\u0644\u062e\u0635\u0645",
+   "precision": "2"
+  },
+  {
+   "fieldname": "services_section",
+   "fieldtype": "Section Break",
+   "label": "\u0627\u0644\u062e\u062f\u0645\u0627\u062a"
+  },
+  {
+   "fieldname": "services",
+   "fieldtype": "Table",
+   "label": "\u0627\u0644\u062e\u062f\u0645\u0627\u062a",
+   "options": "Photographer Service"
+  },
+  {
+   "fieldname": "schedule_section",
+   "fieldtype": "Section Break",
+   "label": "\u0627\u0644\u062c\u062f\u0648\u0644"
+  },
+  {
+   "fieldname": "working_hours",
+   "fieldtype": "Table",
+   "label": "\u0633\u0627\u0639\u0627\u062a \u0627\u0644\u0639\u0645\u0644",
+   "options": "Photographer Working Hours"
+  },
+  {
+   "fieldname": "studio_name",
+   "fieldtype": "Link",
+   "label": "Studio Name",
+   "options": "Photographer Studio"
+  },
+  {
+   "fieldname": "user_account",
+   "fieldtype": "Link",
+   "label": "User Account",
+   "options": "User"
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "\u0627\u0644\u0627\u0633\u0645 \u0627\u0644\u062b\u0627\u0646\u064a",
+   "unique": 1
+  }
+ ],
+ "links": [],
+ "modified": "2025-09-24 21:12:30.161868",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "Photographer",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Agent"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

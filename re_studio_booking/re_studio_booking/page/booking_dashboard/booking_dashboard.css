@@ -1,0 +1,96 @@
+/* Booking Dashboard Styles */
+
+.booking-dashboard-container {
+    direction: rtl;
+    text-align: right;
+}
+
+.booking-dashboard-container h4 {
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+/* Stats Cards */
+.stats-cards {
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background-color: var(--card-bg);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Custom colors for stat cards */
+.stat-card[style*="--blue"] {
+    --bg-blue: rgba(94, 100, 255, 0.1);
+}
+
+.stat-card[style*="--green"] {
+    --bg-green: rgba(40, 167, 69, 0.1);
+}
+
+.stat-card[style*="--orange"] {
+    --bg-orange: rgba(255, 152, 0, 0.1);
+}
+
+.stat-card[style*="--red"] {
+    --bg-red: rgba(255, 88, 88, 0.1);
+}
+
+.stat-card[style*="--purple"] {
+    --bg-purple: rgba(153, 102, 255, 0.1);
+}
+
+/* Bookings List */
+.bookings-list {
+    background-color: var(--card-bg);
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 15px;
+    height: 350px;
+    overflow-y: auto;
+}
+
+.bookings-list table th {
+    background-color: var(--control-bg);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* Charts */
+.status-chart-container,
+.service-chart-container {
+    background-color: var(--card-bg);
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 15px;
+    margin-bottom: 20px;
+    height: 300px;
+}
+
+/* RTL Support for Charts */
+.chart-container .axis line,
+.chart-container .chart-label {
+    direction: ltr;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .stat-card {
+        margin-bottom: 10px;
+    }
+    
+    .bookings-list,
+    .status-chart-container,
+    .service-chart-container {
+        height: auto;
+        margin-bottom: 15px;
+    }
+}

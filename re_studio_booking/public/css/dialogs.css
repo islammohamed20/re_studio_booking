@@ -1,0 +1,419 @@
+/* Re Studio Booking Dialogs Styling */
+/* Enhanced dialog design with modern aesthetics */
+
+.re-studio-dialog .modal-dialog {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border-radius: 16px;
+    border: none;
+    backdrop-filter: blur(10px);
+    animation: dialogSlideIn 0.3s ease-out;
+}
+
+@keyframes dialogSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.re-studio-dialog .modal-backdrop {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+.re-studio-dialog .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px 16px 0 0;
+    padding: 24px 28px;
+    border-bottom: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.re-studio-dialog .modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.re-studio-dialog .modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.re-studio-dialog .modal-title i {
+    margin-left: 12px;
+    font-size: 18px;
+    opacity: 0.9;
+}
+
+.re-studio-dialog .modal-body {
+    padding: 32px 28px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    min-height: 400px;
+}
+
+.re-studio-dialog .form-section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.2s ease;
+}
+
+.re-studio-dialog .form-section:hover {
+    box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.re-studio-dialog .section-head {
+    color: #2d3748;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #e2e8f0;
+    position: relative;
+}
+
+.re-studio-dialog .section-head::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+}
+
+.re-studio-dialog .form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.re-studio-dialog .control-label {
+    color: #2d3748;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+    display: block;
+}
+
+.re-studio-dialog .control-label::after {
+    content: ' *';
+    color: #e53e3e;
+    font-weight: bold;
+}
+
+.re-studio-dialog .form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    background: white;
+    width: 100%;
+}
+
+.re-studio-dialog .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    outline: none;
+    background: #fafbfc;
+}
+
+.re-studio-dialog .form-control:hover {
+    border-color: #cbd5e0;
+}
+
+.re-studio-dialog .awesomplete {
+    width: 100%;
+}
+
+.re-studio-dialog .awesomplete input {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    background: white;
+    width: 100%;
+}
+
+.re-studio-dialog .awesomplete input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.re-studio-dialog .modal-footer {
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    padding: 20px 28px;
+    border-radius: 0 0 16px 16px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.re-studio-dialog .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.re-studio-dialog .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.re-studio-dialog .btn-primary:hover::before {
+    left: 100%;
+}
+
+.re-studio-dialog .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.re-studio-dialog .btn-primary:active {
+    transform: translateY(0);
+}
+
+.re-studio-dialog .btn-secondary {
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    color: #4a5568;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.re-studio-dialog .btn-secondary:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+    transform: translateY(-1px);
+}
+
+.re-studio-dialog .close {
+    color: white;
+    opacity: 0.9;
+    font-size: 24px;
+    font-weight: 300;
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.re-studio-dialog .close:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Loading state */
+.re-studio-dialog .btn-primary.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.re-studio-dialog .btn-primary.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Form validation styles */
+.re-studio-dialog .form-control.error {
+    border-color: #e53e3e;
+    box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.1);
+}
+
+.re-studio-dialog .error-message {
+    color: #e53e3e;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Success state */
+.re-studio-dialog .form-control.success {
+    border-color: #38a169;
+    box-shadow: 0 0 0 4px rgba(56, 161, 105, 0.1);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .re-studio-dialog .modal-dialog {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    .re-studio-dialog .modal-header,
+    .re-studio-dialog .modal-body,
+    .re-studio-dialog .modal-footer {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .re-studio-dialog .form-section {
+        padding: 16px;
+    }
+    
+    .re-studio-dialog .modal-footer {
+        flex-direction: column;
+    }
+    
+    .re-studio-dialog .btn-primary,
+    .re-studio-dialog .btn-secondary {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .re-studio-dialog .modal-body {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    }
+    
+    .re-studio-dialog .form-section {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .re-studio-dialog .section-head {
+        color: #e2e8f0;
+        border-bottom-color: #4a5568;
+    }
+    
+    .re-studio-dialog .control-label {
+        color: #e2e8f0;
+    }
+    
+    .re-studio-dialog .form-control {
+        background: #1a202c;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .re-studio-dialog .form-control:focus {
+        background: #2d3748;
+    }
+}
+
+/* Custom scrollbar for dialog content */
+.re-studio-dialog .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.re-studio-dialog .modal-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.re-studio-dialog .modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+.re-studio-dialog .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* Enhanced focus indicators for accessibility */
+.re-studio-dialog .btn:focus,
+.re-studio-dialog .form-control:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Smooth transitions for all interactive elements */
+.re-studio-dialog * {
+    transition: all 0.2s ease;
+}
+
+/* Custom checkbox and radio styles */
+.re-studio-dialog input[type="checkbox"],
+.re-studio-dialog input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #667eea;
+}
+
+/* Enhanced select dropdown */
+.re-studio-dialog select.form-control {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: left 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px 12px;
+    padding-left: 40px;
+    appearance: none;
+}
+
+/* Floating label effect */
+.re-studio-dialog .floating-label {
+    position: relative;
+}
+
+.re-studio-dialog .floating-label input:focus + label,
+.re-studio-dialog .floating-label input:not(:placeholder-shown) + label {
+    transform: translateY(-25px) scale(0.8);
+    color: #667eea;
+}
+
+.re-studio-dialog .floating-label label {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    background: white;
+    padding: 0 4px;
+}

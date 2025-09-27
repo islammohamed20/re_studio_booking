@@ -1,0 +1,193 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:studio_name",
+ "creation": "2023-08-01 10:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "studio_name",
+  "studio_address",
+  "studio_logo",
+  "column_break_4",
+  "studio_email",
+  "studio_phone",
+  "website",
+  "settings_section",
+  "currency",
+  "currency_symbol",
+  "date_format",
+  "time_format",
+  "column_break_12",
+  "language",
+  "timezone",
+  "working_days_section",
+  "working_days",
+  "business_hours_section",
+  "opening_time",
+  "closing_time"
+ ],
+ "fields": [
+  {
+   "fieldname": "studio_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Studio Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "studio_address",
+   "fieldtype": "Small Text",
+   "label": "Studio Address"
+  },
+  {
+   "fieldname": "studio_logo",
+   "fieldtype": "Attach Image",
+   "label": "Studio Logo"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "studio_email",
+   "fieldtype": "Data",
+   "label": "Studio Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "studio_phone",
+   "fieldtype": "Data",
+   "label": "Studio Phone"
+  },
+  {
+   "fieldname": "website",
+   "fieldtype": "Data",
+   "label": "Website"
+  },
+  {
+   "fieldname": "settings_section",
+   "fieldtype": "Section Break",
+   "label": "General Settings"
+  },
+  {
+   "default": "SAR",
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Default Currency",
+   "options": "Currency"
+  },
+  {
+   "default": "\u0631.\u0633",
+   "fieldname": "currency_symbol",
+   "fieldtype": "Data",
+   "label": "Currency Symbol"
+  },
+  {
+   "default": "dd-mm-yyyy",
+   "fieldname": "date_format",
+   "fieldtype": "Select",
+   "label": "Date Format",
+   "options": "dd-mm-yyyy\ndd/mm/yyyy\nmm/dd/yyyy\nyyyy-mm-dd"
+  },
+  {
+   "default": "12 hour",
+   "fieldname": "time_format",
+   "fieldtype": "Select",
+   "label": "Time Format",
+   "options": "12 hour\n24 hour"
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "ar",
+   "fieldname": "language",
+   "fieldtype": "Link",
+   "label": "Default Language",
+   "options": "Language"
+  },
+  {
+   "default": "Asia/Riyadh",
+   "fieldname": "timezone",
+   "fieldtype": "Select",
+   "label": "Timezone",
+   "options": "Asia/Riyadh\nAsia/Dubai\nAsia/Kuwait\nEurope/London\nAmerica/New_York"
+  },
+  {
+   "fieldname": "working_days_section",
+   "fieldtype": "Section Break",
+   "label": "Working Days"
+  },
+  {
+   "description": "Select the working days for the studio",
+   "fieldname": "working_days",
+   "fieldtype": "Table MultiSelect",
+   "label": "Working Days",
+   "options": "Working Day"
+  },
+  {
+   "fieldname": "business_hours_section",
+   "fieldtype": "Section Break",
+   "label": "Business Hours"
+  },
+  {
+   "default": "09:00:00",
+   "fieldname": "opening_time",
+   "fieldtype": "Time",
+   "label": "Opening Time"
+  },
+  {
+   "default": "17:00:00",
+   "fieldname": "closing_time",
+   "fieldtype": "Time",
+   "label": "Closing Time"
+  }
+ ],
+ "links": [],
+ "modified": "2025-08-08 13:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "Studio Settings",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Agent"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

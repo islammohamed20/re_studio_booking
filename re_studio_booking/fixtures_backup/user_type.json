@@ -1,0 +1,86 @@
+[
+    {
+        "doctype": "User Type",
+        "name": "Photographer User",
+        "role": "Photographer User",
+        "is_standard": 0,
+        "apply_user_permission_on": "Photographer",
+        "user_id_field": "user_account",
+        "user_type_modules": [
+            {
+                "module": "Re Studio Booking"
+            },
+            {
+                "module": "Core"
+            },
+            {
+                "module": "Desk"
+            }
+        ],
+        "user_doctypes": [
+            {
+                "document_type": "Booking",
+                "read": 1,
+                "write": 1,
+                "create": 1,
+                "delete": 0,
+                "submit": 0,
+                "cancel": 0,
+                "amend": 0,
+                "print": 1,
+                "email": 1,
+                "share": 0
+            },
+            {
+                "document_type": "Photographer",
+                "read": 1,
+                "write": 1,
+                "create": 0,
+                "delete": 0,
+                "submit": 0,
+                "cancel": 0,
+                "amend": 0,
+                "print": 1,
+                "email": 1,
+                "share": 0
+            },
+            {
+                "document_type": "Photographer Studio",
+                "read": 1,
+                "write": 1,
+                "create": 0,
+                "delete": 0,
+                "submit": 0,
+                "cancel": 0,
+                "amend": 0,
+                "print": 1,
+                "email": 1,
+                "share": 0
+            },
+            {
+                "document_type": "Service",
+                "read": 1,
+                "write": 0,
+                "create": 0,
+                "delete": 0,
+                "submit": 0,
+                "cancel": 0,
+                "amend": 0,
+                "print": 1,
+                "email": 0,
+                "share": 0
+            }
+        ],
+        "select_doctypes": [
+            {
+                "document_type": "Customer"
+            },
+            {
+                "document_type": "User"
+            },
+            {
+                "document_type": "Currency"
+            }
+        ]
+    }
+]

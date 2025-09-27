@@ -1,0 +1,12 @@
+[
+    {
+        "doctype": "Role",
+        "role_name": "Photographer User",
+        "desk_access": 1,
+        "is_custom": 1,
+        "disabled": 0,
+        "home_page": "/photographer_dashboard",
+        "restrict_to_domain": "",
+        "two_factor_auth": 0
+    }
+]

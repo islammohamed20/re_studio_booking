@@ -1,0 +1,296 @@
+/* Re Studio Booking Sidebar Styles */
+
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-toggle span {
+    width: 20px;
+    height: 2px;
+    background: white;
+    border-radius: 1px;
+    transition: all 0.3s ease;
+}
+
+/* Sidebar Container */
+.re-studio-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 320px;
+    height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: -2px 0 20px rgba(0, 0, 0, 0.2);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+    direction: rtl;
+}
+
+.re-studio-sidebar.collapsed {
+    transform: translateX(100%);
+}
+
+.re-studio-sidebar:not(.collapsed) {
+    transform: translateX(0);
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    padding: 25px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-title {
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.sidebar-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.sidebar-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Sidebar Menu */
+.sidebar-menu {
+    padding: 20px 0;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-right: 4px solid transparent;
+    margin: 2px 0;
+}
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-right-color: rgba(255, 255, 255, 0.5);
+    transform: translateX(-5px);
+}
+
+.menu-item.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-right-color: #fff;
+    color: #fff;
+}
+
+.menu-item .icon {
+    margin-left: 15px;
+    font-size: 18px;
+    width: 25px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-item span {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Animation for sidebar items */
+.re-studio-sidebar:not(.collapsed) .menu-item {
+    animation: slideInRight 0.4s ease forwards;
+}
+
+.re-studio-sidebar:not(.collapsed) .menu-item:nth-child(1) { animation-delay: 0.1s; }
+.re-studio-sidebar:not(.collapsed) .menu-item:nth-child(2) { animation-delay: 0.15s; }
+.re-studio-sidebar:not(.collapsed) .menu-item:nth-child(3) { animation-delay: 0.2s; }
+.re-studio-sidebar:not(.collapsed) .menu-item:nth-child(4) { animation-delay: 0.25s; }
+.re-studio-sidebar:not(.collapsed) .menu-item:nth-child(5) { animation-delay: 0.3s; }
+.re-studio-sidebar:not(.collapsed) .menu-item:nth-child(6) { animation-delay: 0.35s; }
+.re-studio-sidebar:not(.collapsed) .menu-item:nth-child(7) { animation-delay: 0.4s; }
+.re-studio-sidebar:not(.collapsed) .menu-item:nth-child(8) { animation-delay: 0.45s; }
+.re-studio-sidebar:not(.collapsed) .menu-item:nth-child(9) { animation-delay: 0.5s; }
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Scrollbar Styling */
+.re-studio-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.re-studio-sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.re-studio-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.re-studio-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Main content adjustment */
+.main-content {
+    margin-right: 0;
+    transition: margin-right 0.3s ease;
+}
+
+.main-content.sidebar-open {
+    margin-right: 280px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .re-studio-sidebar {
+        width: 100%;
+    }
+    
+    .main-content.sidebar-open {
+        margin-right: 0;
+    }
+    
+    .sidebar-toggle {
+        top: 15px;
+        right: 15px;
+        width: 45px;
+        height: 45px;
+    }
+    
+    .sidebar-toggle span {
+        width: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .re-studio-sidebar {
+        width: 100vw;
+    }
+    
+    .sidebar-header {
+        padding: 20px 15px;
+    }
+    
+    .menu-item {
+        padding: 12px 20px;
+    }
+    
+    .menu-item .icon {
+        margin-left: 12px;
+        font-size: 16px;
+    }
+    
+    .menu-item span {
+        font-size: 13px;
+    }
+}
+
+/* RTL Support */
+[dir="rtl"] .re-studio-sidebar {
+    right: auto;
+    left: 0;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+[dir="rtl"] .sidebar-toggle {
+    right: auto;
+    left: 20px;
+}
+
+[dir="rtl"] .sidebar-toggle.sidebar-open {
+    left: 300px;
+}
+
+[dir="rtl"] .main-content.sidebar-open {
+    margin-right: 0;
+    margin-left: 280px;
+}
+
+[dir="rtl"] .menu-item {
+    text-align: left;
+}
+
+[dir="rtl"] .menu-item:hover {
+    transform: translateX(5px);
+}
+
+[dir="rtl"] .menu-item.active {
+    border-right: none;
+    border-left: 4px solid #fff;
+}
+
+[dir="rtl"] .menu-item i {
+    margin-left: 0;
+    margin-right: 10px;
+}

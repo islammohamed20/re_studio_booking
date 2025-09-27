@@ -1,0 +1,317 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:INV-{####}",
+ "creation": "2025-01-01 10:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "booking_section",
+  "booking",
+  "booking_type",
+  "service",
+  "package",
+  "photographer",
+  "column_break_11",
+  "booking_date",
+  "start_time",
+  "end_time",
+  "status",
+  "customer_section",
+  "client",
+  "client_name",
+  "column_break_thuj",
+  "phone",
+  "mobile_no",
+  "customer_email",
+  "service_section",
+  "selected_services_table",
+  "package_section",
+  "package_name",
+  "package_services_table",
+  "payment_section",
+  "invoice_date",
+  "due_date",
+  "column_break_wyix",
+  "total_amount",
+  "paid_amount",
+  "outstanding_amount",
+  "column_break_nhll",
+  "payment_status",
+  "payment_table_section",
+  "payment_table",
+  "notes_section",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer_section",
+   "fieldtype": "Section Break",
+   "label": "\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0639\u0645\u064a\u0644"
+  },
+  {
+   "fieldname": "client",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "\u0627\u0644\u0639\u0645\u064a\u0644",
+   "options": "Client",
+   "print_hide": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer_email",
+   "fieldtype": "Data",
+   "label": "\u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a"
+  },
+  {
+   "default": "Today",
+   "fieldname": "invoice_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0641\u0627\u062a\u0648\u0631\u0629",
+   "reqd": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "\u062a\u0627\u0631\u064a\u062e \u0627\u0633\u062a\u062d\u0642\u0627\u0642 \u0627\u0644\u062f\u0641\u0639\u0629 \u0627\u0644\u062c\u062f\u064a\u062f\u0647"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "\u0627\u0644\u062d\u0627\u0644\u0629 \u0627\u0644\u0641\u0627\u062a\u0648\u0631\u0629",
+   "options": "Draft\nSubmitted\nPaid\nPartially Paid\nOverdue\nCancelled"
+  },
+  {
+   "fieldname": "booking_section",
+   "fieldtype": "Section Break",
+   "label": "\u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u062d\u062c\u0632"
+  },
+  {
+   "fieldname": "booking",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "\u0627\u0644\u062d\u062c\u0632",
+   "options": "Booking",
+   "reqd": 1
+  },
+  {
+   "fieldname": "booking_type",
+   "fieldtype": "Select",
+   "label": "\u0646\u0648\u0639 \u0627\u0644\u062d\u062c\u0632",
+   "options": "Service\nPackage",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Service'",
+   "fieldname": "service",
+   "fieldtype": "Link",
+   "label": "\u0627\u0644\u062e\u062f\u0645\u0629",
+   "options": "Service",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Package'",
+   "fieldname": "package",
+   "fieldtype": "Link",
+   "label": "\u0627\u0644\u0628\u0627\u0642\u0629",
+   "options": "Package",
+   "read_only": 1
+  },
+  {
+   "fieldname": "photographer",
+   "fieldtype": "Link",
+   "label": "\u0627\u0644\u0645\u0635\u0648\u0631",
+   "options": "Photographer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_11",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "booking_date",
+   "fieldtype": "Date",
+   "label": "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u062d\u062c\u0632",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Service'",
+   "fieldname": "start_time",
+   "fieldtype": "Time",
+   "label": "\u0648\u0642\u062a \u0627\u0644\u0628\u062f\u0621",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Service'",
+   "fieldname": "end_time",
+   "fieldtype": "Time",
+   "label": "\u0648\u0642\u062a \u0627\u0644\u0627\u0646\u062a\u0647\u0627\u0621",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Service'",
+   "fieldname": "service_section",
+   "fieldtype": "Section Break",
+   "label": "\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u062e\u062f\u0645\u0629"
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Service'",
+   "fieldname": "selected_services_table",
+   "fieldtype": "Table",
+   "label": "\u0627\u0644\u062e\u062f\u0645\u0627\u062a \u0627\u0644\u0645\u062e\u062a\u0627\u0631\u0629",
+   "options": "Booking Service Item",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Package'",
+   "fieldname": "package_section",
+   "fieldtype": "Section Break",
+   "label": "\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0628\u0627\u0642\u0629"
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Package'",
+   "fieldname": "package_name",
+   "fieldtype": "Data",
+   "label": "\u0627\u0633\u0645 \u0627\u0644\u0628\u0627\u0642\u0629",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Package'",
+   "fieldname": "package_services_table",
+   "fieldtype": "Table",
+   "label": "\u062e\u062f\u0645\u0627\u062a \u0627\u0644\u0628\u0627\u0642\u0629",
+   "options": "Booking Package Service",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_section",
+   "fieldtype": "Section Break",
+   "label": "\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u062f\u0641\u0639"
+  },
+  {
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "label": "\u0627\u0644\u0645\u0628\u0644\u063a \u0627\u0644\u0645\u062f\u0641\u0648\u0639",
+   "options": "SAR",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outstanding_amount",
+   "fieldtype": "Currency",
+   "label": "\u0627\u0644\u0645\u0628\u0644\u063a \u0627\u0644\u0645\u062a\u0628\u0642\u064a",
+   "options": "SAR",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "\u062d\u0627\u0644\u0629 \u0627\u0644\u062f\u0641\u0639",
+   "options": "Unpaid\nPartially Paid\nPaid\nOverpaid",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "\u0645\u0644\u0627\u062d\u0638\u0627\u062a"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "\u0645\u0644\u0627\u062d\u0638\u0627\u062a"
+  },
+  {
+   "fieldname": "column_break_nhll",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_wyix",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "\u0627\u0644\u0645\u0628\u0644\u063a \u0627\u0644\u0627\u062c\u0645\u0627\u0644\u064a",
+   "options": "SAR",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_table_section",
+   "fieldtype": "Section Break",
+   "label": "\u062c\u062f\u0648\u0644 \u0627\u0644\u0645\u062f\u0641\u0648\u0639\u0627\u062a"
+  },
+  {
+   "fieldname": "payment_table",
+   "fieldtype": "Table",
+   "label": "\u062c\u062f\u0648\u0644 \u0627\u0644\u0645\u062f\u0641\u0648\u0639\u0627\u062a",
+   "options": "Payment Table"
+  },
+  {
+   "fieldname": "client_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "\u0627\u0633\u0645 \u0627\u0644\u0639\u0645\u064a\u0644",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_thuj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "\u0631\u0642\u0645 \u0627\u0644\u0647\u0627\u062a\u0641"
+  },
+  {
+   "fieldname": "mobile_no",
+   "fieldtype": "Data",
+   "label": "\u0631\u0642\u0645 \u0622\u062e\u0631"
+  }
+ ],
+ "links": [],
+ "modified": "2025-09-24 21:47:55.512593",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "Booking Invoice",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Agent"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

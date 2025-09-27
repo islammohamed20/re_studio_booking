@@ -1,0 +1,444 @@
+/* Modern Calendar Styles for Re Studio Booking */
+
+.modern-calendar {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    direction: rtl;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Calendar Header */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 8px;
+}
+
+.month-year h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    text-align: center;
+}
+
+.nav-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: #f8fafc;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.nav-btn:hover {
+    background: #3b82f6;
+    color: white;
+    transform: scale(1.05);
+}
+
+.nav-btn:active {
+    transform: scale(0.95);
+}
+
+/* Days Header */
+.days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.day-header {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    padding: 8px 4px;
+    text-transform: uppercase;
+}
+
+/* Calendar Grid */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 20px;
+}
+
+.calendar-day {
+    position: relative;
+    aspect-ratio: 1;
+    min-height: 44px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 50%;  /* Make all days circular by default */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+    font-weight: 500;
+    font-size: 14px;
+    color: #1e293b;
+    overflow: hidden;
+}
+
+.calendar-day:hover {
+    border-color: #3b82f6;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    border-radius: 50%;
+}
+
+/* Day States */
+.calendar-day.today {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #10b981;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.calendar-day.today:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: scale(1.1);
+}
+
+.calendar-day.selected {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: #3b82f6;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+    border-radius: 50%;
+    transform: scale(1.1);
+}
+
+.calendar-day.disabled {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.calendar-day.disabled:hover {
+    transform: none;
+    border-color: #e2e8f0;
+    box-shadow: none;
+    border-radius: 8px;
+}
+
+.calendar-day.other-month {
+    background: #f8fafc;
+    color: #cbd5e1;
+    border-color: #f1f5f9;
+    cursor: default;
+}
+
+.calendar-day.other-month:hover {
+    transform: none;
+    border-color: #f1f5f9;
+    box-shadow: none;
+    border-radius: 8px;
+}
+
+/* Availability States */
+.calendar-day.available {
+    background: #00df84;
+    border-color: #00b86e;
+    color: white;
+}
+
+.calendar-day.available:hover {
+    background: #00b86e;
+    border-color: #00a363;
+    border-radius: 50%;
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 223, 132, 0.4);
+}
+
+.calendar-day.partial {
+    background: #fbbf24;
+    border-color: #f59e0b;
+    color: white;
+}
+
+.calendar-day.partial:hover {
+    background: #f59e0b;
+    border-color: #d97706;
+    border-radius: 50%;
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+}
+
+.calendar-day.booked {
+    background: #ef4444;
+    border-color: #dc2626;
+    color: white;
+    cursor: not-allowed;
+    opacity: 1;
+}
+
+.calendar-day.booked:hover {
+    background: #dc2626;
+    border-color: #b91c1c;
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    border-radius: 50%;
+}
+
+.calendar-day.loading {
+    background: linear-gradient(135deg, #f1f5f9, #0add24);
+    border-color: #bec1c5;
+    color: #000000;
+    cursor: pointer;
+}
+
+/* Availability Indicator */
+.availability-indicator {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.availability-indicator.available {
+    background: #00df84;
+    box-shadow: 0 0 4px rgba(0, 223, 132, 0.5);
+    animation: pulse-green 2s infinite;
+}
+
+.availability-indicator.partial {
+    background: #fbbf24;
+    box-shadow: 0 0 4px rgba(251, 191, 36, 0.5);
+    animation: pulse-orange 2s infinite;
+}
+
+.availability-indicator.booked {
+    background: #ef4444;
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
+}
+
+/* Pulse Animations */
+@keyframes pulse-green {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+}
+
+@keyframes pulse-orange {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+}
+
+/* Calendar Legend */
+.calendar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid;
+    position: relative;
+}
+
+.legend-dot.available {
+    background: #00df84;
+    border-color: #00b86e;
+}
+
+.legend-dot.partial {
+    background: #fbbf24;
+    border-color: #f59e0b;
+}
+
+.legend-dot.booked {
+    background: #ef4444;
+    border-color: #dc2626;
+}
+
+.legend-dot.today {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #10b981;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .modern-calendar {
+        padding: 16px;
+        margin: 0 8px;
+    }
+    
+    .calendar-day {
+        min-height: 36px;
+        font-size: 12px;
+    }
+    
+    .month-year h3 {
+        font-size: 18px;
+    }
+    
+    .calendar-legend {
+        gap: 12px;
+    }
+    
+    .legend-item {
+        font-size: 11px;
+    }
+}
+
+/* Time Slots Enhancement */
+.time-slot {
+    padding: 10px 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+.time-slot::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(59, 130, 246, 0.1));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.time-slot:hover {
+    border-color: #3b82f6;
+    background: #f0f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    border-radius: 50%;
+}
+
+.time-slot:hover::before {
+    opacity: 1;
+}
+
+.time-slot.selected {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: #3b82f6;
+    color: white;
+    font-weight: 600;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+    border-radius: 50%;
+}
+
+.time-slot.disabled {
+    background: #f9fafb;
+    border-color: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.time-slot.disabled:hover {
+    border-color: #e5e7eb;
+    background: #f9fafb;
+    transform: none;
+    box-shadow: none;
+    border-radius: 8px;
+}
+
+.time-slot.disabled::before {
+    display: none;
+}
+
+/* Selected Date Info Enhancement */
+#selectedDateInfo {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Grid Layout for Time Slots */
+#timeSlots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+    margin-top: 16px;
+}
+
+@media (max-width: 480px) {
+    #timeSlots {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+    
+    .time-slot {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+}
