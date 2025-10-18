@@ -1,0 +1,145 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2025-10-18 10:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "handover_info_section",
+  "shift",
+  "from_user",
+  "to_user",
+  "column_break_5",
+  "handed_amount",
+  "handover_on",
+  "accepted",
+  "accepted_on",
+  "section_break_10",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "سلسلة الترقيم",
+   "options": "SHO-.YYYY.-.#####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "handover_info_section",
+   "fieldtype": "Section Break",
+   "label": "معلومات التسليم"
+  },
+  {
+   "fieldname": "shift",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "الوردية",
+   "options": "Shift",
+   "reqd": 1
+  },
+  {
+   "fieldname": "from_user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "المسلم",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "المستلم",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "handed_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "المبلغ المسلم",
+   "reqd": 1
+  },
+  {
+   "fieldname": "handover_on",
+   "fieldtype": "Datetime",
+   "label": "تاريخ التسليم",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "accepted",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "تم القبول"
+  },
+  {
+   "depends_on": "eval:doc.accepted==1",
+   "fieldname": "accepted_on",
+   "fieldtype": "Datetime",
+   "label": "تاريخ القبول"
+  },
+  {
+   "fieldname": "section_break_10",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "ملاحظات"
+  }
+ ],
+ "links": [],
+ "modified": "2025-10-18 10:00:00",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "Shift Handover",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Cashier",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Shift Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

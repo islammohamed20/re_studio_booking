@@ -9,7 +9,9 @@
   "service_name",
   "column_break_1",
   "is_required",
+  "unit_type",
   "quantity",
+  "\u0627\u0644\u0643\u0645\u064a\u0629",
   "pricing_section",
   "base_price",
   "package_price",
@@ -47,6 +49,7 @@
   },
   {
    "default": "1",
+   "depends_on": "eval:doc.unit_type == '\u0645\u062f\u0629'",
    "fieldname": "quantity",
    "fieldtype": "Int",
    "in_list_view": 1,
@@ -97,12 +100,27 @@
    "fieldname": "service_options",
    "fieldtype": "Small Text",
    "label": "\u062e\u064a\u0627\u0631\u0627\u062a \u0625\u0636\u0627\u0641\u064a\u0629"
+  },
+  {
+   "fieldname": "unit_type",
+   "fieldtype": "Select",
+   "label": "\u0646\u0648\u0639 \u0627\u0644\u0648\u062d\u062f\u0629",
+   "options": "\u0645\u062f\u0629\n\u0643\u0645\u064a\u0629"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.unit_type == '\u0643\u0645\u064a\u0629'",
+   "fieldname": "\u0627\u0644\u0643\u0645\u064a\u0629",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "\u0627\u0644\u0643\u0645\u064a\u0629",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-07 23:39:51.434258",
+ "modified": "2025-10-18 19:36:42.080053",
  "modified_by": "Administrator",
  "module": "Re Studio Booking",
  "name": "Package Service Item",

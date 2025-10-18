@@ -243,6 +243,11 @@ frappe.ui.form.on('Booking', {
                 }
             });
         }
+        
+        // Update available time slots when photographer changes
+        if (frm.doc.booking_date) {
+            update_available_time_slots(frm);
+        }
     },
     
     client: function(frm) {
@@ -440,22 +445,46 @@ function update_available_time_slots(frm) {
         method: 're_studio_booking.re_studio_booking.doctype.booking.booking.get_available_time_slots',
         args: {
             booking_date: frm.doc.booking_date,
-            service: frm.doc.service
+            service: frm.doc.service,
+            photographer: frm.doc.photographer
         },
         callback: function(r) {
-            if (r.message) {
+            if (r.message && r.message.length > 0) {
                 // Update time field options
                 frm.set_df_property('start_time', 'options', r.message.join('\n'));
                 
-                // Check if current time is available
-                if (frm.doc.start_time && !r.message.includes(frm.doc.start_time)) {
-                    frappe.msgprint({
-                        title: __('الوقت غير متاح'),
-                        indicator: 'red',
-                        message: __('الوقت المحدد غير متاح. الرجاء اختيار وقت آخر.')
+                // Check if current time is available (normalize format for comparison)
+                if (frm.doc.start_time) {
+                    // Normalize current time format (remove microseconds if any)
+                    let current_time = String(frm.doc.start_time).split('.')[0];
+                    
+                    // Check if time exists in available slots
+                    let time_available = r.message.some(slot => {
+                        let slot_time = String(slot).split('.')[0];
+                        return slot_time === current_time;
                     });
-                    frm.set_value('start_time', r.message[0]);
+                    
+                    if (!time_available) {
+                        // Only show message if we're editing an existing booking
+                        if (!frm.is_new()) {
+                            frappe.msgprint({
+                                title: __('الوقت غير متاح'),
+                                indicator: 'orange',
+                                message: __('الوقت المحدد سابقاً غير متاح الآن. سيتم اختيار أول وقت متاح.')
+                            });
+                        }
+                        // Set to first available slot silently for new bookings
+                        frm.set_value('start_time', r.message[0]);
+                    }
                 }
+            } else {
+                // No available slots
+                frappe.msgprint({
+                    title: __('لا توجد أوقات متاحة'),
+                    indicator: 'orange',
+                    message: __('جميع الأوقات محجوزة لهذا اليوم. الرجاء اختيار يوم آخر.')
+                });
+                frm.set_df_property('start_time', 'options', '');
             }
         }
     });

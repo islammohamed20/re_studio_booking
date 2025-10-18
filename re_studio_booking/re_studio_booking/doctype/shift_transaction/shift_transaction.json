@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "creation": "2025-10-18 10:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "trx_type",
+  "payment_method",
+  "amount",
+  "column_break_3",
+  "reference_doctype",
+  "reference_name",
+  "party",
+  "section_break_8",
+  "description",
+  "column_break_10",
+  "created_by",
+  "created_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "trx_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "نوع المعاملة",
+   "options": "Payment\\nRefund\\nExpense\\nOpeningBalance\\nDeposit\\nWithdrawal",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payment_method",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "طريقة الدفع",
+   "options": "Cash\\nWallet\\nBank\\nCard",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "المبلغ",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Data",
+   "label": "نوع المرجع"
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Data",
+   "label": "رقم المرجع"
+  },
+  {
+   "fieldname": "party",
+   "fieldtype": "Link",
+   "label": "العميل",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "section_break_8",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "الوصف"
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "أنشئ بواسطة",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "created_on",
+   "fieldtype": "Datetime",
+   "label": "تاريخ الإنشاء",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2025-10-18 10:00:00",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "Shift Transaction",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

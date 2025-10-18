@@ -1,0 +1,247 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2025-10-18 10:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "shift_info_section",
+  "cost_center",
+  "opened_by",
+  "opened_on",
+  "column_break_5",
+  "status",
+  "closed_by",
+  "closed_on",
+  "balance_section",
+  "expected_opening_balance",
+  "actual_closing_balance",
+  "column_break_11",
+  "theoretical_closing_balance",
+  "difference",
+  "transactions_section",
+  "shift_transactions",
+  "totals_section",
+  "total_payments",
+  "total_refunds",
+  "column_break_19",
+  "total_expenses",
+  "total_deposits",
+  "column_break_22",
+  "total_withdrawals",
+  "net_total"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "سلسلة الترقيم",
+   "options": "SHIFT-.YYYY.-.#####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "shift_info_section",
+   "fieldtype": "Section Break",
+   "label": "معلومات الوردية"
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "الخزنة",
+   "options": "Cost Center",
+   "reqd": 1
+  },
+  {
+   "fieldname": "opened_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "فتح بواسطة",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "opened_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "تاريخ الفتح",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "الحالة",
+   "options": "Open\\nClosed\\nHanded Over\\nCancelled",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.status=='Closed' || doc.status=='Handed Over'",
+   "fieldname": "closed_by",
+   "fieldtype": "Link",
+   "label": "أغلق بواسطة",
+   "options": "User"
+  },
+  {
+   "depends_on": "eval:doc.status=='Closed' || doc.status=='Handed Over'",
+   "fieldname": "closed_on",
+   "fieldtype": "Datetime",
+   "label": "تاريخ الإغلاق"
+  },
+  {
+   "fieldname": "balance_section",
+   "fieldtype": "Section Break",
+   "label": "الأرصدة"
+  },
+  {
+   "fieldname": "expected_opening_balance",
+   "fieldtype": "Currency",
+   "label": "الرصيد الافتتاحي المتوقع"
+  },
+  {
+   "depends_on": "eval:doc.status=='Closed' || doc.status=='Handed Over'",
+   "fieldname": "actual_closing_balance",
+   "fieldtype": "Currency",
+   "label": "الرصيد الختامي الفعلي"
+  },
+  {
+   "fieldname": "column_break_11",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "theoretical_closing_balance",
+   "fieldtype": "Currency",
+   "label": "الرصيد الختامي النظري",
+   "read_only": 1
+  },
+  {
+   "fieldname": "difference",
+   "fieldtype": "Currency",
+   "label": "الفرق",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transactions_section",
+   "fieldtype": "Section Break",
+   "label": "المعاملات"
+  },
+  {
+   "fieldname": "shift_transactions",
+   "fieldtype": "Table",
+   "label": "معاملات الوردية",
+   "options": "Shift Transaction"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break",
+   "label": "الإجماليات"
+  },
+  {
+   "fieldname": "total_payments",
+   "fieldtype": "Currency",
+   "label": "إجمالي المدفوعات",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_refunds",
+   "fieldtype": "Currency",
+   "label": "إجمالي المرتجعات",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_19",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_expenses",
+   "fieldtype": "Currency",
+   "label": "إجمالي المصروفات",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_deposits",
+   "fieldtype": "Currency",
+   "label": "إجمالي الإيداعات",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_22",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_withdrawals",
+   "fieldtype": "Currency",
+   "label": "إجمالي السحوبات",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_total",
+   "fieldtype": "Currency",
+   "label": "الصافي",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2025-10-18 10:00:00",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "Shift",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Cashier",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Shift Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accountant"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,176 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:cost_center_name",
+ "creation": "2025-10-18 10:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_info_section",
+  "cost_center_name",
+  "cost_center_type",
+  "user_account",
+  "column_break_4",
+  "company",
+  "currency",
+  "default_account",
+  "is_active",
+  "balance_section",
+  "current_balance",
+  "last_shift",
+  "column_break_balance",
+  "total_in",
+  "total_out"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_info_section",
+   "fieldtype": "Section Break",
+   "label": "\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0629"
+  },
+  {
+   "fieldname": "cost_center_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "\u0627\u0633\u0645 \u0627\u0644\u062e\u0632\u0646\u0629",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "cost_center_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "\u0646\u0648\u0639 \u0627\u0644\u062e\u0632\u0646\u0629",
+   "options": "Cash\nPOS",
+   "reqd": 1
+  },
+  {
+   "fieldname": "user_account",
+   "fieldtype": "Link",
+   "label": "\u062d\u0633\u0627\u0628 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645 \u0627\u0644\u0645\u0633\u0624\u0648\u0644",
+   "options": "User"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "\u0627\u0644\u0634\u0631\u0643\u0629",
+   "options": "Company"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "\u0627\u0644\u0639\u0645\u0644\u0629",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_account",
+   "fieldtype": "Link",
+   "label": "\u0627\u0644\u062d\u0633\u0627\u0628 \u0627\u0644\u0645\u062d\u0627\u0633\u0628\u064a \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a",
+   "options": "Account"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "\u0646\u0634\u0637"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "balance_section",
+   "fieldtype": "Section Break",
+   "label": "\u0627\u0644\u0623\u0631\u0635\u062f\u0629 \u0648\u0627\u0644\u0625\u062d\u0635\u0627\u0626\u064a\u0627\u062a"
+  },
+  {
+   "fieldname": "current_balance",
+   "fieldtype": "Currency",
+   "label": "\u0627\u0644\u0631\u0635\u064a\u062f \u0627\u0644\u062d\u0627\u0644\u064a",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_shift",
+   "fieldtype": "Link",
+   "label": "\u0622\u062e\u0631 \u0648\u0631\u062f\u064a\u0629",
+   "options": "Shift",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_balance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_in",
+   "fieldtype": "Currency",
+   "label": "\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0625\u064a\u062f\u0627\u0639\u0627\u062a",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_out",
+   "fieldtype": "Currency",
+   "label": "\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0633\u062d\u0648\u0628\u0627\u062a",
+   "options": "currency",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2025-10-18 16:17:16.811113",
+ "modified_by": "Administrator",
+ "module": "Re Studio Booking",
+ "name": "Cost Center",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Cost Center Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Cashier"
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accountant",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -24,10 +24,12 @@ frappe.ui.form.on('Photographer', {
             }, __('إجراءات'));
         }
         
-        // Add custom indicators
+        // Add custom indicators based on status field
         if (frm.doc.docstatus === 1) {
-            if (frm.doc.is_active) {
+            if (frm.doc.status === 'Active') {
                 frm.page.set_indicator(__('نشط'), 'green');
+            } else if (frm.doc.status === 'On Leave') {
+                frm.page.set_indicator(__('في إجازة'), 'orange');
             } else {
                 frm.page.set_indicator(__('غير نشط'), 'red');
             }
@@ -38,9 +40,13 @@ frappe.ui.form.on('Photographer', {
         if (frm.doc.docstatus === 1) {
             let intro_html = '';
             
-            if (frm.doc.is_active) {
+            if (frm.doc.status === 'Active') {
                 intro_html = `<div class="alert alert-success">
                     ${__('هذا المصور نشط ومتاح للحجوزات')}
+                </div>`;
+            } else if (frm.doc.status === 'On Leave') {
+                intro_html = `<div class="alert alert-warning">
+                    ${__('هذا المصور في إجازة حالياً')}
                 </div>`;
             } else {
                 intro_html = `<div class="alert alert-danger">
@@ -62,7 +68,7 @@ frappe.ui.form.on('Photographer', {
     onload: function(frm) {
         // Set default values for new document
         if (frm.is_new()) {
-            frm.set_value('is_active', 1);
+            // status is already set to "Active" by default in DocType
             
             // Set default working hours
             set_default_working_hours(frm);

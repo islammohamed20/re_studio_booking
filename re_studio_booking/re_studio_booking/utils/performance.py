@@ -107,8 +107,8 @@ def get_month_revenue():
     return result[0].revenue if result else 0
 
 def get_active_photographers_count():
-    """Get active photographers count"""
-    return frappe.db.count('Photographer', {'is_active': 1})
+    """Get active photographers count based on status field"""
+    return frappe.db.count('Photographer', {'status': 'Active'})
 
 # Chart data with caching
 @frappe.whitelist()
@@ -210,7 +210,7 @@ def create_performance_indexes():
         ("tabBooking", "client", "booking_client_idx"),
         ("tabBooking", "creation", "booking_creation_idx"),
         ("tabService", "is_active", "service_active_idx"),
-        ("tabPhotographer", "is_active", "photographer_active_idx"),
+        ("tabPhotographer", "status", "photographer_status_idx"),
         ("tabClient", "mobile_no", "client_mobile_idx"),
         ("tabClient", "email_id", "client_email_idx"),
     ]

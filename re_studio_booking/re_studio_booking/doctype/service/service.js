@@ -30,6 +30,14 @@ frappe.ui.form.on('Service', {
 		if (!frm.doc.__islocal) {
 			add_booking_stats_section(frm);
 		}
+		
+		// تحديث عرض الحقول بناءً على نوع الوحدة
+		toggle_unit_type_fields(frm);
+	},
+	
+	type_unit: function(frm) {
+		// تحديث عرض الحقول عند تغيير نوع الوحدة
+		toggle_unit_type_fields(frm);
 	},
 	
 	validate: function(frm) {
@@ -38,8 +46,8 @@ frappe.ui.form.on('Service', {
 			frappe.throw(__("يجب أن يكون سعر الخدمة أكبر من صفر"));
 		}
 		
-		// Ensure duration is positive
-		if (frm.doc.duration <= 0) {
+		// Ensure duration is positive if type_unit is مدة
+		if (frm.doc.type_unit == 'مدة' && frm.doc.duration <= 0) {
 			frappe.throw(__("يجب أن تكون مدة الخدمة أكبر من صفر"));
 		}
 	},
@@ -311,4 +319,24 @@ function get_status_color(status) {
 	};
 	
 	return status_colors[status] || 'gray';
+}
+
+// دالة لإظهار/إخفاء الحقول بناءً على نوع الوحدة
+function toggle_unit_type_fields(frm) {
+	const type_unit = frm.doc.type_unit;
+	
+	// إذا كان نوع الوحدة = مدة: إظهار حقول المدة
+	const show_duration_fields = (type_unit == 'مدة');
+	frm.toggle_display('duration', show_duration_fields);
+	frm.toggle_display('min_duration', show_duration_fields);
+	frm.toggle_display('max_duration', show_duration_fields);
+	frm.toggle_display('duration_unit', show_duration_fields);
+	
+	// إذا كان نوع الوحدة غير "مدة" أو فارغ: إظهار حقل الكمية
+	const show_quantity_field = type_unit && type_unit != 'مدة';
+	frm.toggle_display('mount', show_quantity_field);
+	
+	// تحديث مطلوبية الحقول
+	frm.toggle_reqd('duration', show_duration_fields);
+	frm.toggle_reqd('mount', show_quantity_field);
 }

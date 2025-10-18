@@ -13,7 +13,8 @@ class PhotographerService(Document):
 		"""Update service details from the linked service"""
 		if self.service:
 			service_doc = frappe.get_doc("Service", self.service)
-			self.service_name = service_doc.service_name_ar
+			# Use service_name_en as it's the available field
+			self.service_name = service_doc.service_name_en
 			
 			# Set base price from service price automatically
 			self.base_price = service_doc.price
@@ -36,12 +37,19 @@ def get_service_details(service):
 	"""Get service details for client-side use"""
 	if not service:
 		return {}
-		
-	service_doc = frappe.get_doc("Service", service)
-	return {
-		"service_name": service_doc.service_name_ar,
-		"base_price": service_doc.price
-	}
+	
+	try:
+		service_doc = frappe.get_doc("Service", service)
+		return {
+			"service_name": service_doc.service_name_en,
+			"base_price": service_doc.price
+		}
+	except Exception as e:
+		frappe.log_error(f"Error getting service details: {str(e)}", "Photographer Service")
+		return {
+			"service_name": service,
+			"base_price": 0
+		}
 
 @frappe.whitelist()
 def calculate_discount(base_price, photographer_name):

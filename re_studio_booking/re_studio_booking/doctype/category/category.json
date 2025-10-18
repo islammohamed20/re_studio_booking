@@ -11,8 +11,11 @@
   "icon",
   "color",
   "section_break_6",
-  "description",
-  "sort_order"
+  "sort_order",
+  "lft",
+  "rgt",
+  "is_group",
+  "parent_category"
  ],
  "fields": [
   {
@@ -45,23 +48,50 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "description",
-   "fieldtype": "Text Editor",
-   "label": "\u0627\u0644\u0648\u0635\u0641"
-  },
-  {
    "default": "10",
    "fieldname": "sort_order",
    "fieldtype": "Int",
    "label": "\u062a\u0631\u062a\u064a\u0628 \u0627\u0644\u0638\u0647\u0648\u0631"
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Left",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Right",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Is Group"
+  },
+  {
+   "fieldname": "parent_category",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "in_list_view": 1,
+   "label": "Parent Category",
+   "options": "Category"
   }
  ],
+ "is_tree": 1,
  "links": [],
- "modified": "2025-08-03 09:27:03.743066",
+ "modified": "2025-10-18 11:46:35.512214",
  "modified_by": "Administrator",
  "module": "Re Studio Booking",
  "name": "Category",
  "naming_rule": "By fieldname",
+ "nsm_parent_field": "parent_category",
  "owner": "Administrator",
  "permissions": [
   {

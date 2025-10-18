@@ -8,6 +8,13 @@ from datetime import datetime, timedelta
 from frappe.utils import flt
 import json
 
+# استيراد دوال المساعدة من booking_utils
+from .booking_utils import (
+	validate_paid_amount,
+	calculate_services_with_photographer_discount,
+	recalculate_package_services_on_package_change
+)
+
 class Booking(Document):
 	# ------------------------ Core Lifecycle ------------------------ #
 	def before_save(self):
@@ -21,6 +28,9 @@ class Booking(Document):
 		
 		# 3. التحقق من أيام العمل حسب General Settings
 		self.validate_studio_working_day()
+		
+		# 4. التحقق من صحة المبلغ المدفوع
+		validate_paid_amount(self)
 	
 	def validate_studio_working_day(self):
 		"""التحقق من أن تاريخ الحجز في يوم عمل حسب إعدادات General Settings"""
@@ -217,9 +227,15 @@ class Booking(Document):
 			self.used_hours = round(used, 2)
 			remaining = max(package_total - used, 0.0)
 			self.remaining_hours = round(remaining, 2)
-			# Validation: exceed
+			# Validation: exceed - استخدام msgprint بدلاً من throw
 			if package_total and self.used_hours - package_total > 0.0001:
-				frappe.throw(f"تم تجاوز عدد ساعات الباقة المسموح بها. المتاح: {package_total} ساعة")
+				frappe.msgprint(
+					msg=f"⚠️ تم استنفاد جميع ساعات الباقة. المتاح: {package_total} ساعة، المستخدم: {self.used_hours} ساعة",
+					title="تحذير - تجاوز ساعات الباقة",
+					indicator="red"
+				)
+				# تعيين الساعات المتبقية لصفر
+				self.remaining_hours = 0.0
 		except Exception as e:
 			frappe.log_error(f"compute_package_hours_usage error: {str(e)}")
 
@@ -1046,6 +1062,22 @@ def debug_deposit_calculation(booking: str):
 			package_services = package_doc.package_services or []
 			base_sum = 0.0
 			discounted_sum = 0.0
+			
+			# تحديد ما إذا كان هناك خصم للمصور
+			photographer_discount = 0
+			photographer_allowed_services = set()
+			
+			if getattr(self, 'photographer', None) and getattr(self, 'photographer_b2b', False):
+				try:
+					photographer_doc = frappe.get_doc('Photographer', self.photographer)
+					photographer_discount = flt(photographer_doc.discount_percentage or 0)
+					# جلب الخدمات المسموح بخصمها
+					for ps in photographer_doc.get('services', []):
+						if ps.get('allow_discount'):
+							photographer_allowed_services.add(ps.service)
+				except Exception as e:
+					frappe.log_error(f"Error fetching photographer discount: {str(e)}")
+			
 			for service in package_services:
 				qty = float(service.quantity or 1)
 				# Get base price from Service table
@@ -1057,30 +1089,24 @@ def debug_deposit_calculation(booking: str):
 				
 				# Use package price as default, or base price if package price is 0
 				package_price = flt(getattr(service, 'package_price', 0) or 0)
-				final_price = package_price if package_price > 0 else base_price
+				hourly_rate = package_price if package_price > 0 else base_price
 				
-				# Apply photographer discount if available
-				if getattr(self, 'photographer', None):
-					# Check if photographer has this service with discount
-					photographer_service = frappe.db.get_value(
-						"Photographer Service",
-						{
-							"parent": self.photographer,
-							"service": service.service,
-							"is_active": 1
-						},
-						"discounted_price"
-					)
-					if photographer_service:
-						final_price = flt(photographer_service)
+				# تطبيق خصم المصور إذا كانت الخدمة مسموحة
+				photographer_discounted_rate = hourly_rate
+				if photographer_discount > 0 and service.service in photographer_allowed_services:
+					photographer_discounted_rate = hourly_rate * (1 - photographer_discount / 100)
 				
-				amt = qty * final_price
+				# حساب المبلغ الإجمالي = الكمية × سعر الساعة (بعد الخصم إن وُجد)
+				amt = qty * photographer_discounted_rate
+				
 				self.append("package_services_table", {
 					"service": service.service,
 					"service_name": getattr(service, 'service_name', '') or service.service,
 					"quantity": qty,
 					"base_price": base_price,
-					"service_price": final_price,
+					"hourly_rate": hourly_rate,
+					"photographer_discounted_rate": photographer_discounted_rate,
+					"service_price": photographer_discounted_rate,  # السعر النهائي المستخدم
 					"amount": amt
 				})
 				base_sum += qty * base_price
@@ -1368,32 +1394,61 @@ def validate_booking_date(booking_date):
 		return {"valid": False, "message": _("خطأ في التحقق من التاريخ")}
 
 @frappe.whitelist()
-def get_available_time_slots(booking_date, service=None):
-	"""Get available time slots"""
+def get_available_time_slots(booking_date, service=None, photographer=None):
+	"""
+	Get available time slots for a specific date
+	Considers existing bookings and their durations to prevent overlaps
+	"""
 	try:
+		from datetime import datetime, timedelta
+		
 		# Get existing bookings for the date
+		filters = {
+			"booking_date": booking_date,
+			"status": ["not in", ["Cancelled", "Rejected"]]
+		}
+		
+		# If photographer is specified, filter by photographer
+		if photographer:
+			filters["photographer"] = photographer
+		
 		existing_bookings = frappe.get_all(
 			"Booking",
-			filters={
-				"booking_date": booking_date,
-				"status": ["not in", ["Cancelled"]]
-			},
-			fields=["booking_time"]
+			filters=filters,
+			fields=["start_time", "end_time", "duration"]
 		)
 		
-		# Generate all possible time slots (9 AM to 9 PM)
+		# Generate all possible time slots (9 AM to 9 PM, every 30 minutes)
 		all_slots = []
-		for hour in range(9, 22):  # 9 AM to 9 PM
-			all_slots.append(f"{hour:02d}:00")
+		for hour in range(9, 21):  # 9 AM to 9 PM
+			all_slots.append(f"{hour:02d}:00:00")
+			all_slots.append(f"{hour:02d}:30:00")
 		
-		# Remove booked slots
-		booked_times = [booking.booking_time for booking in existing_bookings if booking.booking_time]
-		available_slots = [slot for slot in all_slots if slot not in booked_times]
+		# Create set of blocked time slots
+		blocked_slots = set()
+		
+		for booking in existing_bookings:
+			if booking.start_time and booking.end_time:
+				# Convert to datetime for comparison
+				start = datetime.strptime(str(booking.start_time), "%H:%M:%S")
+				end = datetime.strptime(str(booking.end_time), "%H:%M:%S")
+				
+				# Block all slots that overlap with this booking
+				for slot in all_slots:
+					slot_time = datetime.strptime(slot, "%H:%M:%S")
+					# Slot is blocked if it falls within the booking period
+					if start <= slot_time < end:
+						blocked_slots.add(slot)
+		
+		# Return available slots
+		available_slots = [slot for slot in all_slots if slot not in blocked_slots]
 		
 		return available_slots
+		
 	except Exception as e:
-		frappe.log_error(f"Error getting available time slots: {str(e)}")
-		return []
+		frappe.log_error(f"Error getting available time slots: {str(e)}", "Booking Time Slots Error")
+		# Return default slots on error
+		return [f"{hour:02d}:00:00" for hour in range(9, 21)]
 
 @frappe.whitelist()
 def get_photographer_details(photographer):
@@ -2028,3 +2083,54 @@ def get_booking_events(start, end, filters=None):
 	except Exception as e:
 		frappe.logger().error(f"Error getting booking events: {str(e)}")
 		return []
+
+@frappe.whitelist()
+def get_package_services(package_name):
+	"""
+	الحصول على خدمات الباقة مع تجاوز فحص الصلاحيات
+	
+	Args:
+		package_name: اسم الباقة
+		
+	Returns:
+		list: قائمة خدمات الباقة
+	"""
+	try:
+		# جلب مستند الباقة
+		package_doc = frappe.get_doc("Package", package_name)
+		
+		# التحقق من وجود خدمات
+		if not package_doc.get("package_services"):
+			frappe.throw(_("لا توجد خدمات في هذه الباقة. يرجى إضافة خدمات أولاً."))
+		
+		services = []
+		# اسم الحقل الصحيح هو "package_services" وليس "services"
+		for service_row in package_doc.get("package_services", []):
+			services.append({
+				"service": service_row.service,
+				"service_name": service_row.get("service_name", ""),
+				"quantity": service_row.get("quantity", 1),
+				"service_price": service_row.get("service_price", 0),
+				"base_price": service_row.get("base_price", 0),
+				"package_price": service_row.get("package_price", 0),
+				"amount": service_row.get("amount", 0),
+				"is_mandatory": 1  # جميع خدمات الباقة إجبارية افتراضياً
+			})
+		
+		# جلب معلومات الباقة أيضاً
+		return {
+			"services": services,
+			"package_name": package_doc.package_name,
+			"package_name_ar": package_doc.get("package_name_ar", ""),
+			"total_hours": package_doc.get("total_hours", 0),
+			"minimum_booking_hours": package_doc.get("minimum_booking_hours", 1),
+			"total_price": package_doc.get("total_price", 0),
+			"final_price": package_doc.get("final_price", 0),
+			"discount_percentage": package_doc.get("discount_percentage", 0)
+		}
+		
+	except Exception as e:
+		error_msg = f"خطأ في جلب خدمات الباقة: {str(e)}"
+		frappe.log_error(error_msg, "Get Package Services")
+		frappe.throw(_(error_msg))
+

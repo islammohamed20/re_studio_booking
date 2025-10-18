@@ -36,6 +36,7 @@ app_include_js = [
     "/assets/re_studio_booking/js/admin_dashboard_charts.js",
     "/assets/re_studio_booking/js/admin_dashboard_utils.js",
     "/assets/re_studio_booking/js/dialogs.js",
+    "/assets/re_studio_booking/js/calendar_polyfill.js",
     "/assets/re_studio_booking/js/booking-form.js"
 ]
 
@@ -45,9 +46,9 @@ home_page = ""
 
 # Setup Wizard
 # ------------------
-setup_wizard_requires = "/assets/re_studio_booking/js/setup_wizard.js"
-setup_wizard_stages = "re_studio_booking.setup_wizard.setup_wizard.get_setup_stages"
-setup_wizard_complete = "re_studio_booking.setup_wizard.setup_wizard.setup_complete"
+setup_wizard_requires = None
+setup_wizard_stages = None
+setup_wizard_complete = None
 
 # include js, css files in header of web template
 web_include_css = [
@@ -59,6 +60,7 @@ web_include_css = [
 web_include_js = [
     "/assets/re_studio_booking/js/re_studio_booking.js",
     "/assets/re_studio_booking/js/dialogs.js",
+    "/assets/re_studio_booking/js/calendar_polyfill.js",
     "/assets/re_studio_booking/js/booking-form.js"
 ]
 
@@ -98,7 +100,7 @@ page_js = {
 
 # include js in doctype views
 doctype_js = {
-	"Booking" : ["public/js/booking.js", "public/js/booking_debug.js"],
+	"Booking" : ["public/js/calendar_polyfill.js", "public/js/booking.js", "public/js/booking_debug.js"],
 	"Photographer" : "public/js/photographer.js"
 }
 doctype_list_js = {

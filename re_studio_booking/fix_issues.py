@@ -122,13 +122,13 @@ def create_default_records():
             print("✅ Created default service")
         
         # Create default photographer if none exists  
-        if not frappe.db.exists("Photographer", {"is_active": 1}):
+        if not frappe.db.exists("Photographer", {"status": "Active"}):
             photographer = frappe.get_doc({
                 "doctype": "Photographer",
-                "photographer_name": "أحمد محمد",
-                "is_active": 1,
-                "phone": "0501234567",
-                "email": "photographer@restudio.com"
+                "first_name": "أحمد",
+                "last_name": "محمد",
+                "status": "Active",
+                "phone": "0501234567"
             })
             photographer.insert()
             print("✅ Created default photographer")

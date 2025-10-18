@@ -173,67 +173,86 @@ def create_studio_settings_doctype():
 
 
 def create_default_services(args):
-	"""Create default photography services"""
-	default_services = [
-		{
-			"service_name": "Portrait Photography",
-			"description": "Professional portrait photography session",
-			"duration": 60,
-			"price": 100.0
-		},
-		{
-			"service_name": "Wedding Photography",
-			"description": "Complete wedding photography package",
-			"duration": 480,
-			"price": 1500.0
-		},
-		{
-			"service_name": "Event Photography",
-			"description": "Event and party photography",
-			"duration": 240,
-			"price": 500.0
-		},
-		{
-			"service_name": "Product Photography",
-			"description": "Professional product photography",
-			"duration": 120,
-			"price": 200.0
-		}
-	]
-	
-	for service_data in default_services:
-		if not frappe.db.exists("Service", service_data["service_name"]):
-			service = frappe.get_doc({
-				"doctype": "Service",
-				"service_name": service_data["service_name"],
-				"description": service_data["description"],
-				"duration": service_data["duration"],
-				"price": service_data["price"],
-				"is_active": 1
-			})
-			service.insert(ignore_permissions=True)
-	
-	frappe.db.commit()
+    """Create default photography services with proper fields and category"""
+    # Ensure a default Category exists (required by Service DocType)
+    default_category_name = args.get("default_category_name") or "Photography"
+    if not frappe.db.exists("Category", default_category_name):
+        category_doc = frappe.get_doc({
+            "doctype": "Category",
+            "category_name_en": default_category_name,
+            "icon": "camera",
+            "color": "#4e73df",
+            "description": "Default photography category"
+        })
+        category_doc.insert(ignore_permissions=True)
+
+    default_services = [
+        {
+            "service_name": "Portrait Photography",
+            "duration": 60,
+            "price": 100.0
+        },
+        {
+            "service_name": "Wedding Photography",
+            "duration": 480,
+            "price": 1500.0
+        },
+        {
+            "service_name": "Event Photography",
+            "duration": 240,
+            "price": 500.0
+        },
+        {
+            "service_name": "Product Photography",
+            "duration": 120,
+            "price": 200.0
+        }
+    ]
+
+    # Insert services using correct field names
+    for service_data in default_services:
+        if not frappe.db.exists("Service", service_data["service_name"]):
+            service = frappe.get_doc({
+                "doctype": "Service",
+                # Service DocType uses english name field as autoname
+                "service_name_en": service_data["service_name"],
+                # Link required Category
+                "category": default_category_name,
+                # Duration values are in minutes; ensure unit is minutes
+                "duration": service_data["duration"],
+                "duration_unit": "دقيقة",
+                # Required price field
+                "price": service_data["price"],
+                "is_active": 1
+            })
+            service.insert(ignore_permissions=True)
+
+    frappe.db.commit()
 
 
 def create_default_photographer(args):
-	"""Create default photographer from user data"""
-	user_name = args.get("photographer_name", args.get("full_name", "Default Photographer"))
-	user_email = args.get("photographer_email", args.get("email", "photographer@restudio.com"))
-	
-	if not frappe.db.exists("Photographer", user_email):
+	"""Create default photographer using correct DocType fields.
+
+	Photographer DocType uses `autoname = field:first_name` and requires `phone`.
+	Set status to Inactive to avoid validation that requires an active service.
+	"""
+	first_name = args.get("photographer_name") or args.get("full_name") or "Default Photographer"
+	last_name = args.get("last_name") or ""
+	phone = args.get("photographer_phone") or args.get("phone") or "0000000000"
+	specialization = args.get("specializations") or args.get("specialization") or ""
+
+	# Doc name equals first_name due to autoname
+	if not frappe.db.exists("Photographer", first_name):
 		photographer = frappe.get_doc({
 			"doctype": "Photographer",
-			"photographer_name": user_name,
-			"email": user_email,
-			"phone": args.get("photographer_phone", args.get("phone", "")),
-			"is_active": 1,
-			"working_hours_start": args.get("photographer_hours_start", "09:00"),
-			"working_hours_end": args.get("photographer_hours_end", "18:00"),
-			"specializations": args.get("specializations", "")
+			"first_name": first_name,
+			"last_name": last_name,
+			"phone": phone,
+			"status": "Inactive",
+			"specialization": specialization,
 		})
 		photographer.insert(ignore_permissions=True)
-	
+
 	frappe.db.commit()
 
 

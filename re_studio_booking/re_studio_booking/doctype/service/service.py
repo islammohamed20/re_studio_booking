@@ -7,18 +7,32 @@ from frappe.utils import getdate, nowdate, format_date, format_time
 
 class Service(Document):
 	def validate(self):
+		"""Validate service before saving"""
 		self.validate_price()
-		self.validate_duration()
+		# Only validate duration for duration-based services
+		if getattr(self, 'type_unit', None) == 'مدة':
+			self.validate_duration()
+		# Validate quantity for non-duration services
+		elif getattr(self, 'type_unit', None) and self.type_unit != 'مدة':
+			self.validate_quantity()
 	
 	def validate_price(self):
-		# Ensure price is positive
-		if self.price <= 0:
+		"""Ensure price is positive"""
+		if self.price is None or self.price <= 0:
 			frappe.throw("يجب أن يكون سعر الخدمة أكبر من صفر")
 			
 	def validate_duration(self):
-		# Ensure duration is positive
-		if self.duration <= 0:
-			frappe.throw("يجب أن تكون مدة الخدمة أكبر من صفر")
+		"""Ensure duration is positive only for duration-based services"""
+		if self.type_unit == 'مدة':
+			if self.duration is None or self.duration <= 0:
+				frappe.throw("يجب أن تكون مدة الخدمة أكبر من صفر")
+	
+	def validate_quantity(self):
+		"""Ensure quantity is positive for quantity-based services"""
+		if self.type_unit and self.type_unit != 'مدة':
+			mount = getattr(self, 'mount', None)
+			if mount is None or mount <= 0:
+				frappe.throw(f"يجب أن تكون الكمية أكبر من صفر لخدمة {self.type_unit}")
 			
 	def on_update(self):
 		# Update linked photographers if needed

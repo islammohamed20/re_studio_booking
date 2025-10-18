@@ -1,16 +1,17 @@
 {
  "charts": [],
- "content": "[{\"type\": \"header\", \"data\": {\"text\": \"Re Studio Booking\", \"level\": 2, \"col\": 12}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"New Booking\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Bookings\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Photographers\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Services\", \"col\": 3}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Booking Management\", \"level\": 4, \"col\": 12}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Bookings\", \"col\": 4}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Clients\", \"col\": 4}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Invoices\", \"col\": 4}}, {\"type\": \"header\", \"data\": {\"text\": \"Studio Management\", \"level\": 4, \"col\": 12}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Photographers\", \"col\": 4}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Services\", \"col\": 4}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Packages\", \"col\": 4}}, {\"type\": \"header\", \"data\": {\"text\": \"Reports & Analytics\", \"level\": 4, \"col\": 12}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 6}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Settings\", \"col\": 6}}]",
- "creation": "2024-01-15 10:00:00.000000",
+ "content": "[{\"id\":\"CyTpBR56Hi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Re Studio Booking</span>\",\"col\":12}},{\"id\":\"f9WXCqoRTK\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Booking\",\"col\":3}},{\"id\":\"t0TgY0yg4W\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bookings\",\"col\":3}},{\"id\":\"Vlsbl_l-tA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Photographers\",\"col\":3}},{\"id\":\"DV8OAEap5b\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Services\",\"col\":3}},{\"id\":\"Pc05dmxvXt\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"hKvwEsgvLy\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Booking Management</span>\",\"col\":12}},{\"id\":\"KdimUTk1_L\",\"type\":\"card\",\"data\":{\"card_name\":\"Bookings\",\"col\":3}},{\"id\":\"grSu-NrnuO\",\"type\":\"card\",\"data\":{\"card_name\":\"Photographers\",\"col\":3}},{\"id\":\"ZZ6ZwVWGDU\",\"type\":\"card\",\"data\":{\"card_name\":\"Accounts\",\"col\":3}},{\"id\":\"-ZDhstOM6y\",\"type\":\"card\",\"data\":{\"card_name\":\"Services\",\"col\":3}},{\"id\":\"RuW8Brd9-v\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports &amp; Analytics</span>\",\"col\":12}},{\"id\":\"iLYqtwY56D\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":6}}]",
+ "creation": "2024-01-15 10:00:00",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
  "hide_custom": 0,
- "icon": "camera",
+ "icon": "clipboard",
  "idx": 1,
+ "indicator_color": "",
  "is_hidden": 0,
- "label": "Re Studio",
+ "label": "Re Studio Booking",
  "links": [
   {
    "description": "Manage studio bookings and appointments",
@@ -165,18 +166,47 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Booking Settings",
+   "label": "Accounts",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payment Method",
    "link_count": 0,
-   "link_to": "Booking Settings",
+   "link_to": "Payment Method",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cost Center",
+   "link_count": 0,
+   "link_to": "Cost Center",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Account",
+   "link_count": 0,
+   "link_to": "Account",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2024-01-15 10:00:00.000000",
+ "modified": "2025-10-18 19:35:48.192534",
  "modified_by": "Administrator",
  "module": "Re Studio Booking",
- "name": "Re Studio",
+ "name": "Re Studio Booking",
  "number_cards": [],
  "owner": "Administrator",
  "parent_page": "",
@@ -184,7 +214,7 @@
  "quick_lists": [],
  "restrict_to_domain": "",
  "roles": [],
- "sequence_id": 15.0,
+ "sequence_id": 1.0,
  "shortcuts": [
   {
    "color": "Blue",
@@ -215,5 +245,5 @@
    "type": "DocType"
   }
  ],
- "title": "Re Studio"
+ "title": "Re Studio Booking"
 }
