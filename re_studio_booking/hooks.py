@@ -16,6 +16,7 @@ add_to_apps_screen = [
 		"name": "re_studio_booking",
 		"logo": "/assets/re_studio_booking/images/logo.svg",
 		"title": "Re Studio Booking",
+		"route": "/app/re-studio-booking",
 		"has_permission": "re_studio_booking.re_studio_booking.setup.install.has_app_permission"
 	}
 ]
