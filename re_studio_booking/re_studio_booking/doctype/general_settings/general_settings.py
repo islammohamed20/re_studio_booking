@@ -22,9 +22,6 @@ class GeneralSettings(Document):
 	
 	def validate_currency_settings(self):
 		"""Validate currency settings"""
-		if self.decimal_places and (self.decimal_places < 0 or self.decimal_places > 6):
-			frappe.throw(_("Decimal places must be between 0 and 6"))
-		
 		if self.tax_rate and (self.tax_rate < 0 or self.tax_rate > 100):
 			frappe.throw(_("Tax rate must be between 0 and 100"))
 		

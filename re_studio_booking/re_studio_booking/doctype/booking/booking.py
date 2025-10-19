@@ -19,6 +19,10 @@ class Booking(Document):
 	# ------------------------ Core Lifecycle ------------------------ #
 	def before_save(self):
 		"""تنفيذ العمليات قبل الحفظ"""
+		# 0. تعيين الموظف الحالي تلقائياً
+		if not self.current_employee:
+			self.current_employee = frappe.session.user
+		
 		# 1. تغيير الحالة إلى Confirmed عند الحفظ
 		if self.status != 'Confirmed':
 			self.status = 'Confirmed'
@@ -188,6 +192,40 @@ class Booking(Document):
 			frappe.log_error("calculate_booking_total missing on Booking instance - using fallback", "Booking.validate fallback")
 			self._fallback_calculate_booking_total()
 
+	def on_trash(self):
+		"""منع حذف الحجز إذا كان مدفوعاً بالكامل (ما عدا Administrator)"""
+		self._check_deletion_permission()
+	
+	def before_cancel(self):
+		"""منع إلغاء الحجز إذا كان مدفوعاً بالكامل (ما عدا Administrator)"""
+		self._check_deletion_permission()
+	
+	def _check_deletion_permission(self):
+		"""التحقق من صلاحية حذف/إلغاء الحجز"""
+		# السماح لـ Administrator بكل شيء
+		if frappe.session.user == "Administrator":
+			return
+		
+		# التحقق فقط لحجوزات الخدمات (Service)
+		if self.booking_type != 'Service':
+			return
+		
+		# التحقق من أن المبلغ المدفوع = المبلغ الإجمالي
+		paid_amount = flt(getattr(self, 'paid_amount', 0) or 0)
+		total_amount = flt(getattr(self, 'total_amount', 0) or 0)
+		
+		# إذا كان المبلغ المدفوع يساوي المبلغ الإجمالي (تم الدفع كاملاً)
+		if paid_amount > 0 and total_amount > 0 and abs(paid_amount - total_amount) < 0.01:
+			frappe.throw(
+				msg=f"⛔ لا يمكن حذف أو إلغاء هذا الحجز!<br><br>"
+					f"<b>السبب:</b> تم دفع المبلغ بالكامل<br>"
+					f"<b>المبلغ الإجمالي:</b> {total_amount} ريال<br>"
+					f"<b>المبلغ المدفوع:</b> {paid_amount} ريال<br><br>"
+					f"يمكن فقط لـ <b>Administrator</b> حذف أو إلغاء هذا الحجز.<br>"
+					f"يرجى التواصل مع مدير النظام.",
+				title="غير مسموح بالحذف أو الإلغاء"
+			)
+
 	def compute_package_hours_usage(self):
 		"""Compute used and remaining hours for a package based on package_booking_dates child rows.
 		- Calculates each row.hours from start_time & end_time if both present.
@@ -198,10 +236,12 @@ class Booking(Document):
 		try:
 			if self.booking_type != 'Package':
 				return
+			
 			# Determine total hours allotted by package
 			package_total = 0.0
 			if getattr(self, 'package', None):
 				package_total = float(frappe.db.get_value('Package', self.package, 'total_hours') or 0)
+			
 			used = 0.0
 			for row in (self.package_booking_dates or []):
 				# Derive row.hours if times present
@@ -224,18 +264,29 @@ class Booking(Document):
 							row.hours = 0
 				if getattr(row, 'hours', None):
 					used += float(row.hours)
+			
 			self.used_hours = round(used, 2)
 			remaining = max(package_total - used, 0.0)
 			self.remaining_hours = round(remaining, 2)
-			# Validation: exceed - استخدام msgprint بدلاً من throw
-			if package_total and self.used_hours - package_total > 0.0001:
-				frappe.msgprint(
-					msg=f"⚠️ تم استنفاد جميع ساعات الباقة. المتاح: {package_total} ساعة، المستخدم: {self.used_hours} ساعة",
-					title="تحذير - تجاوز ساعات الباقة",
-					indicator="red"
-				)
-				# تعيين الساعات المتبقية لصفر
-				self.remaining_hours = 0.0
+			
+			# Validation: prevent exceeding package hours
+			if package_total > 0 and self.used_hours > package_total:
+				# التحقق من تجاوز الساعات بهامش خطأ صغير
+				excess = self.used_hours - package_total
+				if excess > 0.01:  # هامش خطأ 0.01 ساعة (36 ثانية)
+					frappe.throw(
+						msg=f"⚠️ تم تجاوز ساعات الباقة المتاحة!<br><br>"
+							f"<b>إجمالي ساعات الباقة:</b> {package_total} ساعة<br>"
+							f"<b>الساعات المستخدمة:</b> {self.used_hours} ساعة<br>"
+							f"<b>الساعات الزائدة:</b> {round(excess, 2)} ساعة<br><br>"
+							f"يرجى تعديل تواريخ الحجز لتتناسب مع الساعات المتاحة.",
+						title="خطأ - تجاوز ساعات الباقة"
+					)
+				else:
+					# إذا كان الفرق بسيط جداً، نعتبره مساوياً
+					self.used_hours = package_total
+					self.remaining_hours = 0.0
+					
 		except Exception as e:
 			frappe.log_error(f"compute_package_hours_usage error: {str(e)}")
 
@@ -379,19 +430,44 @@ class Booking(Document):
 		return ctx
 
 	def _sync_selected_services_quantity_from_time(self):
-		"""Ensure selected service rows quantity matches total_booked_hours (authoritative)."""
+		"""
+		تحديث كمية الخدمات المختارة من إجمالي الساعات المحجوزة.
+		ملاحظة: الخدمات المرنة لا يتم تحديث كميتها تلقائياً.
+		"""
 		if self.booking_type != 'Service':
 			return
 		if not getattr(self, 'total_booked_hours', None):
 			return
-		if hasattr(self, 'selected_services_table') and self.selected_services_table:
-			for r in self.selected_services_table:
-				try:
-					# لا نكتب فوق كمية موجودة (قد تكون ناتج دمج تكرارات سابقة)
-					if not getattr(r, 'quantity', None) or float(r.quantity) == 0:
-						r.quantity = self.total_booked_hours
-				except Exception:
-					pass
+		if not hasattr(self, 'selected_services_table') or not self.selected_services_table:
+			return
+		
+		total_hours = flt(self.total_booked_hours)
+		if total_hours <= 0:
+			return
+		
+		# المرور على كل الخدمات المختارة
+		for row in self.selected_services_table:
+			try:
+				service_name = getattr(row, 'service', None)
+				if not service_name:
+					continue
+				
+				# التحقق من أن الخدمة ليست مرنة
+				is_flexible = frappe.db.get_value('Service', service_name, 'is_flexible_service')
+				
+				if not is_flexible:
+					# تحديث الكمية = إجمالي الساعات (للخدمات غير المرنة فقط)
+					row.quantity = total_hours
+					frappe.logger().debug(
+						f"📊 تحديث كمية الخدمة {service_name}: {total_hours} ساعة"
+					)
+				else:
+					frappe.logger().debug(
+						f"⚙️ الخدمة {service_name} مرنة - لا يتم تحديث الكمية"
+					)
+			except Exception as e:
+				frappe.logger().error(f"خطأ في تحديث كمية الخدمة: {str(e)}")
+				pass
 
 	def _deduplicate_selected_services(self):
 		"""دمج الصفوف المكررة لنفس الخدمة داخل selected_services_table:
@@ -553,22 +629,57 @@ class Booking(Document):
 		# Reuse existing fetch if table empty; otherwise adjust discount only
 		if not getattr(self, 'package_services_table', None):
 			self.populate_package_services()
+		
 		discount_pct = ctx["discount_pct"] if ctx["discount_pct"] > 0 else 0
 		allowed = ctx["allowed_services"]
+		photographer = getattr(self, 'photographer', None)
+		photographer_b2b = getattr(self, 'photographer_b2b', False)
+		
+		# جلب بيانات المصور إذا كان B2B مفعل
+		photographer_services = {}
+		if photographer and photographer_b2b and discount_pct > 0:
+			try:
+				photographer_doc = frappe.get_doc('Photographer', photographer)
+				if photographer_doc.get('b2b'):
+					for ps in photographer_doc.get('services', []):
+						photographer_services[ps.service] = {
+							'discounted_price': flt(ps.get('discounted_price') or 0),
+							'base_price': flt(ps.get('base_price') or 0)
+						}
+			except Exception as e:
+				frappe.logger().error(f"خطأ في جلب خدمات المصور: {str(e)}")
+		
 		for row in (self.package_services_table or []):
-			base_price = float(getattr(row, 'base_price', 0) or getattr(row, 'service_price', 0) or 0)
+			service_name = getattr(row, 'service', None)
+			base_price = float(getattr(row, 'base_price', 0) or getattr(row, 'package_price', 0) or 0)
 			row.base_price = base_price
 			qty = float(getattr(row, 'quantity', 1) or 1)
-			applied_pct = discount_pct if (discount_pct > 0 and row.service in allowed) else 0
-			line_base = base_price * qty
-			if applied_pct:
-				row.photographer_discount_amount = line_base * (applied_pct/100.0)
-				row.amount = line_base - row.photographer_discount_amount
-				if row.amount < 0:
-					row.amount = 0
-			else:
-				row.photographer_discount_amount = 0
-				row.amount = line_base
+			
+			# Preserve the mandatory flag (أجباري) - don't overwrite it
+			# This field is set when package services are first populated from Package
+			
+			# حساب السعر بعد خصم المصور
+			photographer_discounted_rate = base_price
+			applied_discount_amount = 0
+			
+			if service_name in photographer_services:
+				# استخدام السعر المخصوم من المصور إذا كان موجوداً
+				if photographer_services[service_name]['discounted_price'] > 0:
+					photographer_discounted_rate = photographer_services[service_name]['discounted_price']
+					applied_discount_amount = (base_price - photographer_discounted_rate) * qty
+				# وإلا استخدام نسبة الخصم العامة
+				elif discount_pct > 0 and service_name in allowed:
+					photographer_discounted_rate = base_price * (1 - discount_pct / 100.0)
+					applied_discount_amount = (base_price - photographer_discounted_rate) * qty
+			
+			# تعيين القيم
+			row.photographer_discount_amount = photographer_discounted_rate  # السعر بعد الخصم
+			row.amount = photographer_discounted_rate * qty  # المبلغ الإجمالي
+			
+			frappe.logger().debug(
+				f"📊 خدمة {service_name}: base={base_price}, "
+				f"discounted={photographer_discounted_rate}, qty={qty}, amount={row.amount}"
+			)
 
 	def _aggregate_package_totals(self):
 		if self.booking_type != 'Package':
@@ -1065,16 +1176,19 @@ def debug_deposit_calculation(booking: str):
 			
 			# تحديد ما إذا كان هناك خصم للمصور
 			photographer_discount = 0
-			photographer_allowed_services = set()
+			photographer_services = {}  # تخزين بيانات الخدمات من جدول المصور
 			
 			if getattr(self, 'photographer', None) and getattr(self, 'photographer_b2b', False):
 				try:
 					photographer_doc = frappe.get_doc('Photographer', self.photographer)
 					photographer_discount = flt(photographer_doc.discount_percentage or 0)
-					# جلب الخدمات المسموح بخصمها
+					# جلب الخدمات مع السعر المخصوم من جدول خدمات المصور
 					for ps in photographer_doc.get('services', []):
-						if ps.get('allow_discount'):
-							photographer_allowed_services.add(ps.service)
+						photographer_services[ps.service] = {
+							'discounted_price': flt(ps.get('discounted_price') or 0),
+							'base_price': flt(ps.get('base_price') or 0),
+							'allow_discount': ps.get('allow_discount', 0)
+						}
 				except Exception as e:
 					frappe.log_error(f"Error fetching photographer discount: {str(e)}")
 			
@@ -1091,23 +1205,32 @@ def debug_deposit_calculation(booking: str):
 				package_price = flt(getattr(service, 'package_price', 0) or 0)
 				hourly_rate = package_price if package_price > 0 else base_price
 				
-				# تطبيق خصم المصور إذا كانت الخدمة مسموحة
+				# تطبيق خصم المصور - الأولوية للسعر المخصوم من جدول المصور
 				photographer_discounted_rate = hourly_rate
-				if photographer_discount > 0 and service.service in photographer_allowed_services:
-					photographer_discounted_rate = hourly_rate * (1 - photographer_discount / 100)
+				
+				if service.service in photographer_services:
+					# الأولوية الأولى: استخدام السعر المخصوم (discounted_price) من جدول المصور
+					if photographer_services[service.service]['discounted_price'] > 0:
+						photographer_discounted_rate = photographer_services[service.service]['discounted_price']
+					# الأولوية الثانية: استخدام نسبة الخصم العامة إذا كانت الخدمة مسموح بخصمها
+					elif photographer_discount > 0 and photographer_services[service.service]['allow_discount']:
+						photographer_discounted_rate = hourly_rate * (1 - photographer_discount / 100)
 				
 				# حساب المبلغ الإجمالي = الكمية × سعر الساعة (بعد الخصم إن وُجد)
 				amt = qty * photographer_discounted_rate
+				
+				# Get is_required field from Package Service Item
+				is_mandatory = getattr(service, 'is_required', 0) or 0
 				
 				self.append("package_services_table", {
 					"service": service.service,
 					"service_name": getattr(service, 'service_name', '') or service.service,
 					"quantity": qty,
 					"base_price": base_price,
-					"hourly_rate": hourly_rate,
-					"photographer_discounted_rate": photographer_discounted_rate,
-					"service_price": photographer_discounted_rate,  # السعر النهائي المستخدم
-					"amount": amt
+					"package_price": hourly_rate,  # سعر الساعة داخل الباقة (before photographer discount)
+					"photographer_discount_amount": photographer_discounted_rate,  # السعر بعد خصم المصور (per hour)
+					"amount": amt,  # المبلغ الإجمالي
+					"أجباري": is_mandatory  # Set mandatory field from Package Service Item
 				})
 				base_sum += qty * base_price
 				discounted_sum += amt
@@ -2132,5 +2255,107 @@ def get_package_services(package_name):
 	except Exception as e:
 		error_msg = f"خطأ في جلب خدمات الباقة: {str(e)}"
 		frappe.log_error(error_msg, "Get Package Services")
+		frappe.throw(_(error_msg))
+
+@frappe.whitelist()
+def get_package_services_with_photographer(package_name, photographer=None, photographer_b2b=0):
+	"""
+	الحصول على خدمات الباقة مع تطبيق خصم المصور إذا كان موجوداً
+	
+	Args:
+		package_name: اسم الباقة
+		photographer: اسم المصور (اختياري)
+		photographer_b2b: هل المصور B2B (0 أو 1)
+		
+	Returns:
+		dict: معلومات الباقة مع الخدمات والأسعار بعد الخصم
+	"""
+	try:
+		# جلب مستند الباقة
+		package_doc = frappe.get_doc("Package", package_name)
+		
+		# التحقق من وجود خدمات
+		if not package_doc.get("package_services"):
+			frappe.throw(_("لا توجد خدمات في هذه الباقة. يرجى إضافة خدمات أولاً."))
+		
+		# جلب بيانات المصور وخدماته إذا كان موجوداً ومفعل B2B
+		photographer_services = {}
+		photographer_discount_pct = 0
+		
+		if photographer and int(photographer_b2b or 0) == 1:
+			try:
+				photographer_doc = frappe.get_doc('Photographer', photographer)
+				if photographer_doc.get('b2b'):
+					photographer_discount_pct = flt(photographer_doc.get('discount_percentage') or 0)
+					# جلب الخدمات مع السعر المخصوم من جدول خدمات المصور
+					for ps in photographer_doc.get('services', []):
+						photographer_services[ps.service] = {
+							'discounted_price': flt(ps.get('discounted_price') or 0),
+							'base_price': flt(ps.get('base_price') or 0),
+							'allow_discount': ps.get('allow_discount', 0)
+						}
+			except Exception as e:
+				frappe.log_error(f"Error fetching photographer services: {str(e)}")
+		
+		services = []
+		# معالجة خدمات الباقة مع تطبيق خصم المصور
+		for service_row in package_doc.get("package_services", []):
+			service_name = service_row.service
+			quantity = flt(service_row.get("quantity", 1))
+			
+			# Get base price from Service table
+			base_price = 0
+			try:
+				base_price = flt(frappe.db.get_value("Service", service_name, "price") or 0)
+			except Exception:
+				base_price = 0
+			
+			# Use package price as default, or base price if package price is 0
+			package_price = flt(service_row.get('package_price', 0) or 0)
+			hourly_rate = package_price if package_price > 0 else base_price
+			
+			# تطبيق خصم المصور - الأولوية للسعر المخصوم من جدول المصور
+			photographer_discounted_rate = hourly_rate
+			
+			if service_name in photographer_services:
+				# الأولوية الأولى: استخدام السعر المخصوم (discounted_price) من جدول المصور
+				if photographer_services[service_name]['discounted_price'] > 0:
+					photographer_discounted_rate = photographer_services[service_name]['discounted_price']
+				# الأولوية الثانية: استخدام نسبة الخصم العامة إذا كانت الخدمة مسموح بخصمها
+				elif photographer_discount_pct > 0 and photographer_services[service_name]['allow_discount']:
+					photographer_discounted_rate = hourly_rate * (1 - photographer_discount_pct / 100)
+			
+			# حساب المبلغ الإجمالي
+			amount = quantity * photographer_discounted_rate
+			
+			# Get is_required field from Package Service Item
+			is_mandatory = service_row.get('is_required', 0) or 0
+			
+			services.append({
+				"service": service_name,
+				"service_name": service_row.get("service_name", ""),
+				"quantity": quantity,
+				"base_price": base_price,
+				"package_price": hourly_rate,
+				"photographer_discount_amount": photographer_discounted_rate,
+				"amount": amount,
+				"is_mandatory": is_mandatory
+			})
+		
+		# جلب معلومات الباقة
+		return {
+			"services": services,
+			"package_name": package_doc.package_name,
+			"package_name_ar": package_doc.get("package_name_ar", ""),
+			"total_hours": package_doc.get("total_hours", 0),
+			"minimum_booking_hours": package_doc.get("minimum_booking_hours", 1),
+			"total_price": package_doc.get("total_price", 0),
+			"final_price": package_doc.get("final_price", 0),
+			"discount_percentage": package_doc.get("discount_percentage", 0)
+		}
+		
+	except Exception as e:
+		error_msg = f"خطأ في جلب خدمات الباقة مع خصم المصور: {str(e)}"
+		frappe.log_error(error_msg, "Get Package Services With Photographer")
 		frappe.throw(_(error_msg))
 

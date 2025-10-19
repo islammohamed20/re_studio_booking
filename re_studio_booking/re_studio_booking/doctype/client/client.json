@@ -24,8 +24,11 @@
   "city",
   "country",
   "additional_info_section",
-  "tax_id",
+  "from",
+  "employee",
+  "name_person",
   "column_break_19",
+  "tax_id",
   "b2b_discount_percentage"
  ],
  "fields": [
@@ -142,6 +145,8 @@
    "options": "Country"
   },
   {
+   "allow_in_quick_entry": 1,
+   "collapsible": 1,
    "fieldname": "additional_info_section",
    "fieldtype": "Section Break",
    "label": "\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0625\u0636\u0627\u0641\u064a\u0629"
@@ -163,10 +168,31 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "\u0627\u0633\u0645 \u0627\u0644\u0645\u0646\u0634\u0623\u0629"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "from",
+   "fieldtype": "Select",
+   "label": "Source From",
+   "options": "Indoor\nOutdoor\nfrom Employee"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "depends_on": "eval:doc.from=='from Employee'",
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "User"
+  },
+  {
+   "depends_on": "eval:doc.from && doc.from != 'from Employee'",
+   "fieldname": "name_person",
+   "fieldtype": "Data",
+   "label": "Name Person"
   }
  ],
  "links": [],
- "modified": "2025-10-18 11:40:55.210635",
+ "modified": "2025-10-18 21:21:51.511835",
  "modified_by": "Administrator",
  "module": "Re Studio Booking",
  "name": "Client",

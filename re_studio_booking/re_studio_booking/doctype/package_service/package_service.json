@@ -7,12 +7,14 @@
  "field_order": [
   "service",
   "service_name",
+  "type_unit",
   "column_break_3",
   "quantity",
   "section_break_5",
   "service_price",
   "base_price",
   "package_price",
+  "unit_price",
   "column_break_7",
   "is_mandatory",
   "amount"
@@ -32,6 +34,13 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "\u0627\u0633\u0645 \u0627\u0644\u062e\u062f\u0645\u0629",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "service.type_unit",
+   "fieldname": "type_unit",
+   "fieldtype": "Data",
+   "label": "\u0646\u0648\u0639 \u0627\u0644\u0648\u062d\u062f\u0629",
    "read_only": 1
   },
   {
@@ -72,6 +81,14 @@
      "options": "SAR",
      "description": "السعر بعد خصم الباقة (إن وجد)"
     },
+    {
+     "fieldname": "unit_price",
+     "fieldtype": "Currency",
+     "in_list_view": 1,
+     "label": "\u0633\u0639\u0631 \u0627\u0644\u0643\u0645\u064a\u0629",
+     "options": "SAR",
+     "description": "السعر لكل وحدة/كمية (للخدمات التي تُحسب بالكمية مثل Reels، Photos)"
+    },
   {
    "fieldname": "column_break_7",
    "fieldtype": "Column Break"
@@ -79,6 +96,7 @@
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "\u0627\u0644\u0645\u0628\u0644\u063a",
    "options": "SAR",
    "read_only": 1

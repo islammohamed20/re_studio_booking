@@ -45,6 +45,12 @@ def get_data():
                     "description": _("Manage service packages")
                 },
                 {
+                    "type": "doctype",
+                    "name": "Payment Method",
+                    "label": _("💳 طرق الدفع"),
+                    "description": _("Manage payment methods")
+                },
+                {
                     "type": "link",
                     "name": "User",
                     "label": _("👤 إدارة المستخدمين"),

@@ -14,6 +14,8 @@ frappe.ui.form.on('Booking', {
 		let row = locals[cdt][cdn];
 		row.total_amount = row.quantity * row.package_price;
 		frm.refresh_field('package_services_table');
+		// Recompute package totals and deposit
+		recalculate_total(frm);
 	},
 	package_services_table_remove: function(frm) {
 		// Recalculate total amount when a row is removed
@@ -307,20 +309,36 @@ function delete_package_service(frm, row) {
 
 // Function to recalculate total amount
 function recalculate_total(frm) {
-	let total = 0;
+	let base_total = 0;
+	let final_total = 0;
 	(frm.doc.package_services_table || []).forEach(function(service) {
-		total += service.total_amount || 0;
+		const qty = flt(service.quantity || 1);
+		base_total += flt(service.base_price || 0) * qty;
+		// Prefer server-computed amount when present (includes photographer discount)
+		const row_total = service.amount != null ? flt(service.amount) : flt(service.total_amount || (flt(service.package_price || 0) * qty));
+		final_total += row_total;
 	});
+	// Update package totals on parent
+	frm.set_value('base_amount_package', base_total);
+	frm.set_value('total_amount_package', final_total);
 	
-	frm.set_value('total_amount', total);
-	
-	// Calculate deposit amount
-	if (frm.doc.package) {
-		frappe.db.get_value('Package', frm.doc.package, 'deposit_percentage', function(r) {
-			if (r && r.deposit_percentage) {
-				let deposit_percentage = r.deposit_percentage || 30;
-				let deposit_amount = (total * deposit_percentage) / 100;
-				frm.set_value('deposit_amount', deposit_amount);
+	// Update deposit via unified UI helper if available
+	if (typeof update_deposit_ui === 'function') {
+		update_deposit_ui(frm);
+	} else {
+		// Fallback: compute deposit from General Settings
+		frappe.call({
+			method: 're_studio_booking.re_studio_booking.doctype.general_settings.general_settings.get_pricing_settings',
+			callback: function(res) {
+				const s = res.message || {};
+				const pct = flt(s.deposit_percentage || 30);
+				const min_amt = flt(s.minimum_booking_amount || 0);
+				let deposit = ((final_total * pct) / 100);
+				deposit = Number(deposit.toFixed(2));
+				if (min_amt > 0 && deposit < min_amt && final_total > 0) {
+					deposit = Math.min(min_amt, final_total);
+				}
+				frm.set_value('deposit_amount', deposit);
 			}
 		});
 	}

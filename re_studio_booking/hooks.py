@@ -84,6 +84,7 @@ website_route_rules = [
 	{"from_route": "/re_studio_booking/currency-settings", "to_route": "/currency-settings"},
 ]
 
+website_redirects = []
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "re_studio_booking/public/scss/website"
 
@@ -100,7 +101,7 @@ page_js = {
 
 # include js in doctype views
 doctype_js = {
-	"Booking" : ["public/js/calendar_polyfill.js", "public/js/booking.js", "public/js/booking_debug.js"],
+	"Booking" : ["public/js/calendar_polyfill.js", "public/js/booking.js", "public/js/booking_package_services.js", "public/js/booking_debug.js"],
 	"Photographer" : "public/js/photographer.js"
 }
 doctype_list_js = {

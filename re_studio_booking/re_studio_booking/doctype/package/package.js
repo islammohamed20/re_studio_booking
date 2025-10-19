@@ -7,6 +7,9 @@ frappe.ui.form.on('Package', {
 		setup_package_form(frm);
 		show_remaining_hours_message(frm);
 		update_booking_restrictions(frm);
+		
+		// حساب المجموع عند تحميل الـ form
+		calculate_package_total_price(frm);
 	},
 
 	total_hours: function(frm) {
@@ -46,6 +49,19 @@ frappe.ui.form.on('Package Service Item', {
 						frappe.model.set_value(cdt, cdn, 'service_name', r.message.service_name);
 						frappe.model.set_value(cdt, cdn, 'base_price', r.message.base_price);
 						frappe.model.set_value(cdt, cdn, 'package_price', r.message.package_price);
+						
+						// تعيين نوع الوحدة (مدة/كمية)
+						frappe.model.set_value(cdt, cdn, 'unit_type', r.message.unit_type);
+						
+						// تحديد الحقول الافتراضية بناءً على النوع
+						if (r.message.unit_type === 'مدة') {
+							// خدمة زمنية: تعيين الكمية = 1
+							frappe.model.set_value(cdt, cdn, 'quantity', 1);
+						} else {
+							// خدمة كمية: تعيين الكمية = 1
+							frappe.model.set_value(cdt, cdn, 'qty', 1);
+							frappe.model.set_value(cdt, cdn, 'qty_price', r.message.package_price);
+						}
 					}
 				}
 			});
@@ -60,6 +76,18 @@ frappe.ui.form.on('Package Service Item', {
 
 	quantity: function(frm, cdt, cdn) {
 		// Calculate total amount when quantity changes
+		calculate_service_total(frm, cdt, cdn);
+		calculate_package_total_price(frm);
+	},
+	
+	qty: function(frm, cdt, cdn) {
+		// Calculate total amount when qty changes (for quantity-based services)
+		calculate_service_total(frm, cdt, cdn);
+		calculate_package_total_price(frm);
+	},
+	
+	qty_price: function(frm, cdt, cdn) {
+		// Calculate total amount when qty_price changes (for quantity-based services)
 		calculate_service_total(frm, cdt, cdn);
 		calculate_package_total_price(frm);
 	},
@@ -175,20 +203,51 @@ function calculate_final_price(frm) {
 
 function calculate_service_total(frm, cdt, cdn) {
 	let row = locals[cdt][cdn];
-	if (row.package_price && row.quantity) {
-		let total = row.package_price * row.quantity;
-		frappe.model.set_value(cdt, cdn, 'total_amount', total);
+	let total = 0;
+	
+	// حساب بناءً على نوع الوحدة
+	if (row.unit_type === 'مدة') {
+		// خدمات زمنية: package_price × quantity
+		if (row.package_price && row.quantity) {
+			total = row.package_price * row.quantity;
+		}
+	} else if (row.unit_type === 'كمية') {
+		// خدمات كمية: qty_price × qty
+		if (row.qty_price && row.qty) {
+			total = row.qty_price * row.qty;
+		}
+	} else {
+		// fallback: استخدام package_price × quantity
+		if (row.package_price && row.quantity) {
+			total = row.package_price * row.quantity;
+		}
 	}
+	
+	frappe.model.set_value(cdt, cdn, 'total_amount', total);
 }
 
 function calculate_package_total_price(frm) {
 	let total = 0;
+	
+	// التحقق من وجود الجدول
+	if (!frm.doc.package_services || frm.doc.package_services.length === 0) {
+		frm.set_value('total_price', 0);
+		return;
+	}
+	
+	// جمع المبالغ من جميع الخدمات
 	frm.doc.package_services.forEach(function(service) {
 		if (service.total_amount) {
-			total += service.total_amount;
+			// التأكد من تحويل القيمة إلى رقم
+			total += flt(service.total_amount);
 		}
 	});
+	
+	// تحديث السعر الإجمالي
 	frm.set_value('total_price', total);
+	
+	// تسجيل للتشخيص
+	console.log(`📊 Package Total Price: ${total} (from ${frm.doc.package_services.length} services)`);
 }
 
 function calculate_booking_hours(frm, cdt, cdn) {

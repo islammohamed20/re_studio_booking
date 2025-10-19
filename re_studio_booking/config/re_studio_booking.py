@@ -186,5 +186,46 @@ def get_data():
 					"description": _("Configure booking settings")
 				}
 			]
+		},
+		{
+			"label": _("Finance"),
+			"items": [
+				{
+					"type": "doctype",
+					"name": "Bank",
+					"label": _("Bank"),
+					"description": _("Banks")
+				},
+				{
+					"type": "doctype",
+					"name": "Bank Account",
+					"label": _("Bank Accounts"),
+					"description": _("Bank accounts")
+				},
+				{
+					"type": "doctype",
+					"name": "Account",
+					"label": _("Accounts"),
+					"description": _("Chart of accounts")
+				},
+				{
+					"type": "doctype",
+					"name": "Journal Entry",
+					"label": _("Journal Entries"),
+					"description": _("Manual journal entries")
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "General Ledger",
+					"doctype": "GL Entry"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Bank Reconciliation Statement",
+					"doctype": "GL Entry"
+				}
+			]
 		}
 	]

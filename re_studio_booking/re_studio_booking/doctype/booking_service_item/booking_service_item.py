@@ -29,10 +29,39 @@ class BookingServiceItem(Document):
 			return
 		try:
 			booking = frappe.get_doc("Booking", self.parent)
+			# التحقق من تفعيل B2B للمصور
 			if getattr(booking, 'photographer_b2b', False) and getattr(booking, 'photographer', None):
-				discount_pct = flt(frappe.db.get_value("Photographer", booking.photographer, "discount_percentage") or 0)
-				if discount_pct > 0 and base_price > 0:
-					self.discounted_price = base_price * (1 - discount_pct / 100.0)
+				photographer_doc = frappe.get_doc("Photographer", booking.photographer)
+				# التحقق من أن المصور لديه B2B مفعل
+				if getattr(photographer_doc, 'b2b', False):
+					# البحث عن الخدمة في جدول خدمات المصور
+					for photographer_service in photographer_doc.get('services', []):
+						if photographer_service.service == self.service:
+							# استخدام السعر المخصوم من جدول المصور إذا كان موجوداً
+							photographer_discounted_price = flt(photographer_service.get('discounted_price') or 0)
+							
+							if photographer_discounted_price > 0:
+								# استخدام السعر المخصوم من المصور
+								self.discounted_price = photographer_discounted_price
+								frappe.logger().debug(
+									f"✅ تطبيق السعر المخصوم من المصور للخدمة {self.service}: "
+									f"{base_price} → {self.discounted_price}"
+								)
+							elif photographer_doc.discount_percentage:
+								# استخدام نسبة الخصم العامة إذا لم يكن هناك سعر مخصوم محدد
+								discount_pct = flt(photographer_doc.discount_percentage or 0)
+								if discount_pct > 0 and base_price > 0:
+									self.discounted_price = base_price * (1 - discount_pct / 100.0)
+									frappe.logger().debug(
+										f"✅ تطبيق خصم {discount_pct}% على الخدمة {self.service}: "
+										f"{base_price} → {self.discounted_price}"
+									)
+							break
+					else:
+						# الخدمة غير موجودة في جدول المصور
+						frappe.logger().debug(
+							f"⚠️ الخدمة {self.service} غير موجودة في جدول خدمات المصور {booking.photographer}"
+						)
 		except Exception as e:
 			frappe.log_error(f"Photographer discount error: {str(e)}", "BookingServiceItem")
 

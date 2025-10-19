@@ -24,7 +24,7 @@ def calculate_package_service_total(service_item):
 
 def calculate_photographer_discounted_rate(service_item, photographer, package_doc):
 	"""
-	حساب سعر الساعة بعد خصم المصور للخدمات المسموح بها
+	حساب سعر الساعة بعد خصم المصور للخدمات
 	
 	Args:
 		service_item: صف الخدمة في جدول خدمات الباقة
@@ -32,7 +32,7 @@ def calculate_photographer_discounted_rate(service_item, photographer, package_d
 		package_doc: مستند الباقة
 	
 	Returns:
-		float: سعر الساعة بعد الخصم أو السعر الأصلي إذا لم يكن مسموحاً بالخصم
+		float: سعر الساعة بعد الخصم أو السعر الأصلي
 	"""
 	if not photographer:
 		return flt(service_item.get('hourly_rate', 0))
@@ -41,26 +41,32 @@ def calculate_photographer_discounted_rate(service_item, photographer, package_d
 	photographer_doc = frappe.get_doc('Photographer', photographer)
 	
 	# التحقق من تفعيل B2B
-	if not photographer_doc.get('b2b_enabled'):
+	if not photographer_doc.get('b2b'):
 		return flt(service_item.get('hourly_rate', 0))
 	
-	# التحقق من أن الخدمة مسموح بها في خدمات المصور
+	# البحث عن الخدمة في جدول خدمات المصور
 	service_name = service_item.get('service')
-	photographer_services = [s.service for s in photographer_doc.get('services', [])]
+	photographer_services = photographer_doc.get('services', [])
 	
-	if service_name not in photographer_services:
-		return flt(service_item.get('hourly_rate', 0))
-	
-	# التحقق من أن الخدمة مسموح بخصمها
-	for ps in photographer_doc.get('services', []):
-		if ps.service == service_name and ps.get('allow_discount'):
-			# تطبيق خصم المصور
+	for ps in photographer_services:
+		if ps.service == service_name:
+			# استخدام السعر المخصوم من المصور إذا كان موجوداً
+			photographer_discounted_price = flt(ps.get('discounted_price') or 0)
+			
+			if photographer_discounted_price > 0:
+				return photographer_discounted_price
+			
+			# وإلا استخدام نسبة الخصم العامة
 			discount_percentage = flt(photographer_doc.get('discount_percentage', 0))
-			hourly_rate = flt(service_item.get('hourly_rate', 0))
-			discounted_rate = hourly_rate * (1 - discount_percentage / 100)
-			return discounted_rate
+			if discount_percentage > 0:
+				hourly_rate = flt(service_item.get('hourly_rate', 0))
+				discounted_rate = hourly_rate * (1 - discount_percentage / 100)
+				return discounted_rate
+			
+			# وإلا السعر الأصلي
+			return flt(service_item.get('hourly_rate', 0))
 	
-	# إذا لم يكن مسموحاً بالخصم
+	# الخدمة غير موجودة في جدول المصور
 	return flt(service_item.get('hourly_rate', 0))
 
 
@@ -68,8 +74,8 @@ def validate_paid_amount(booking_doc):
 	"""
 	التحقق من صحة المبلغ المدفوع قبل الحفظ
 	يجب أن يكون المبلغ المدفوع:
-	- مساوياً أو أكبر من العربون
-	- أو مساوياً للمبلغ الإجمالي الكامل بعد الخصم
+	- مساوياً أو أكبر من مبلغ العربون
+	- ولا يتجاوز المبلغ الإجمالي الكامل بعد الخصم
 	
 	Args:
 		booking_doc: مستند الحجز
@@ -83,22 +89,62 @@ def validate_paid_amount(booking_doc):
 	# تحديد المبلغ الإجمالي حسب نوع الحجز
 	if booking_doc.booking_type == 'Service':
 		total_amount = flt(booking_doc.get('total_amount', 0))
+		amount_label = "المبلغ الإجمالي بعد الخصم"
 	elif booking_doc.booking_type == 'Package':
 		total_amount = flt(booking_doc.get('total_amount_package', 0))
+		amount_label = "المبلغ الإجمالي للباقة بعد الخصم"
 	else:
 		total_amount = 0
+		amount_label = "المبلغ الإجمالي"
+	
+	# إذا لم يتم إدخال مبلغ مدفوع، لا داعي للتحقق
+	if paid_amount == 0:
+		return
 	
 	# التحقق: المبلغ المدفوع >= العربون
 	if paid_amount < deposit_amount:
 		frappe.throw(_(
-			f"المبلغ المدفوع ({paid_amount:.2f}) يجب أن يكون مساوياً أو أكبر من العربون ({deposit_amount:.2f})"
-		))
+			f"❌ المبلغ المدفوع ({paid_amount:,.2f} ج.م) أقل من مبلغ العربون المطلوب!\n\n"
+			f"📌 مبلغ العربون لتأكيد الحجز: {deposit_amount:,.2f} ج.م\n"
+			f"💰 {amount_label}: {total_amount:,.2f} ج.م\n\n"
+			f"⚠️ يجب أن يكون المبلغ المدفوع:\n"
+			f"   • مساوياً أو أكبر من العربون ({deposit_amount:,.2f} ج.م)\n"
+			f"   • أو مساوياً للمبلغ الإجمالي ({total_amount:,.2f} ج.م)"
+		), title="خطأ في المبلغ المدفوع")
 	
 	# التحقق: المبلغ المدفوع <= المبلغ الإجمالي
 	if paid_amount > total_amount:
 		frappe.throw(_(
-			f"المبلغ المدفوع ({paid_amount:.2f}) لا يمكن أن يكون أكبر من المبلغ الإجمالي ({total_amount:.2f})"
-		))
+			f"❌ المبلغ المدفوع ({paid_amount:,.2f} ج.م) أكبر من المبلغ الإجمالي!\n\n"
+			f"💰 {amount_label}: {total_amount:,.2f} ج.م\n"
+			f"📌 مبلغ العربون: {deposit_amount:,.2f} ج.م\n"
+			f"💵 المبلغ المدفوع: {paid_amount:,.2f} ج.م\n\n"
+			f"⚠️ المبلغ المدفوع يتجاوز المبلغ الإجمالي بمقدار: {(paid_amount - total_amount):,.2f} ج.م"
+		), title="خطأ في المبلغ المدفوع")
+	
+	# رسالة نجاح إذا كان المبلغ صحيحاً
+	if paid_amount == total_amount:
+		frappe.msgprint(
+			f"✅ تم دفع المبلغ الإجمالي كاملاً: {paid_amount:,.2f} ج.م",
+			title="دفع كامل",
+			indicator="green"
+		)
+	elif paid_amount == deposit_amount:
+		remaining = total_amount - paid_amount
+		frappe.msgprint(
+			f"✅ تم دفع مبلغ العربون: {paid_amount:,.2f} ج.م\n"
+			f"📌 المبلغ المتبقي: {remaining:,.2f} ج.م",
+			title="دفع العربون",
+			indicator="blue"
+		)
+	else:
+		remaining = total_amount - paid_amount
+		frappe.msgprint(
+			f"✅ تم دفع: {paid_amount:,.2f} ج.م\n"
+			f"📌 المبلغ المتبقي: {remaining:,.2f} ج.م من أصل {total_amount:,.2f} ج.م",
+			title="دفع جزئي",
+			indicator="orange"
+		)
 
 
 def calculate_services_with_photographer_discount(booking_doc):

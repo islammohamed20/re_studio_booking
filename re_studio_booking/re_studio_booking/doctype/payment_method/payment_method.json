@@ -1,14 +1,26 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:method_name",
  "creation": "2025-08-03 19:18:11.291749",
  "doctype": "DocType",
- "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "method_name",
+  "display_name",
   "is_active",
-  "description"
+  "method_category",
+  "provider",
+  "wallet_provider",
+  "supported_networks",
+  "column_break_usxs",
+  "percentage_fee",
+  "fixed_fee",
+  "min_amount",
+  "max_amount",
+  "requires_3ds",
+  "is_default",
+  "supports_refund"
  ],
  "fields": [
   {
@@ -16,7 +28,85 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Payment Method Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "display_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Display Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "method_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "Card\nWallet\nCash\nBank Transfer",
    "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.method_category=='Card'||doc.method_category=='Wallet'",
+   "fieldname": "provider",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Provider"
+  },
+  {
+   "depends_on": "eval:doc.method_category=='Card'",
+   "fieldname": "supported_networks",
+   "fieldtype": "Table",
+   "label": "Card Networks",
+   "options": "Payment Method Network"
+  },
+  {
+   "depends_on": "eval:doc.method_category=='Wallet'",
+   "fieldname": "wallet_provider",
+   "fieldtype": "Select",
+   "label": "Wallet Provider",
+   "options": "\nSTC Pay\nVodafone Cash\nOrange Money\nEtisalat Cash\nApple Pay\nGoogle Pay\nPayPal"
+  },
+  {
+   "default": "0",
+   "fieldname": "percentage_fee",
+   "fieldtype": "Float",
+   "label": "Percentage Fee (%)"
+  },
+  {
+   "default": "0",
+   "fieldname": "fixed_fee",
+   "fieldtype": "Currency",
+   "label": "Fixed Fee"
+  },
+  {
+   "fieldname": "min_amount",
+   "fieldtype": "Currency",
+   "label": "Min Amount"
+  },
+  {
+   "fieldname": "max_amount",
+   "fieldtype": "Currency",
+   "label": "Max Amount"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.method_category=='Card'",
+   "fieldname": "requires_3ds",
+   "fieldtype": "Check",
+   "label": "Requires 3-D Secure"
+  },
+  {
+   "default": "0",
+   "fieldname": "supports_refund",
+   "fieldtype": "Check",
+   "label": "Supports Refund"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Default Method"
   },
   {
    "default": "1",
@@ -25,22 +115,38 @@
    "label": "Is Active"
   },
   {
-   "fieldname": "description",
-   "fieldtype": "Text",
-   "label": "Description"
+   "fieldname": "column_break_usxs",
+   "fieldtype": "Column Break"
   }
  ],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-03 19:18:11.291749",
+ "modified": "2025-10-19 20:06:58.101485",
  "modified_by": "Administrator",
  "module": "Re Studio Booking",
  "name": "Payment Method",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
- "permissions": [],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

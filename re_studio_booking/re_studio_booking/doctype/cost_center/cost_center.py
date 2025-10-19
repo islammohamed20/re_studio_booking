@@ -16,7 +16,9 @@ class CostCenter(Document):
 		"""Ensure default account is valid"""
 		if self.default_account:
 			account = frappe.get_doc("Account", self.default_account)
-			if account.is_group:
+			# Some installations may use a simplified Account DocType without 'is_group'
+			is_group = getattr(account, "is_group", 0)
+			if is_group:
 				frappe.throw(f"الحساب المحاسبي {self.default_account} هو حساب مجموعة ولا يمكن استخدامه")
 	
 	def calculate_balances(self):

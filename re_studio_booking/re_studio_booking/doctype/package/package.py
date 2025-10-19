@@ -25,9 +25,35 @@ class Package(Document):
 		"""Calculate total price from all services"""
 		total = 0
 		for service in self.package_services:
-			if service.package_price:
-				total += flt(service.package_price) * flt(service.quantity or 1)
+			service_total = 0
+			
+			# حساب بناءً على نوع الوحدة
+			if service.unit_type == 'مدة':
+				# خدمات زمنية: package_price × quantity
+				if service.package_price:
+					service_total = flt(service.package_price) * flt(service.quantity or 1)
+			elif service.unit_type == 'كمية':
+				# خدمات كمية: qty_price × qty
+				if service.qty_price and service.qty:
+					service_total = flt(service.qty_price) * flt(service.qty)
+			else:
+				# fallback: استخدام package_price × quantity
+				if service.package_price:
+					service_total = flt(service.package_price) * flt(service.quantity or 1)
+			
+			# تحديث total_amount في الصف
+			service.total_amount = service_total
+			
+			# إضافة إلى المجموع الكلي
+			total += service_total
+		
 		self.total_price = total
+		
+		# تسجيل للتشخيص
+		frappe.logger().debug(
+			f"Package.calculate_total_price: total_price={total} "
+			f"from {len(self.package_services)} services"
+		)
 
 	def calculate_final_price(self):
 		"""Calculate final price after discount"""
@@ -90,11 +116,17 @@ class Package(Document):
 def get_service_details(service):
 	"""Get service details for package service table"""
 	service_doc = frappe.get_doc("Service", service)
+	
+	# تحديد نوع الوحدة
+	unit_type = 'مدة' if service_doc.type_unit == 'مدة' else 'كمية'
+	
 	return {
 		'service_name': service_doc.service_name_en,
 		'base_price': service_doc.price,
 		'package_price': service_doc.price,
-		'duration': service_doc.duration
+		'duration': service_doc.duration,
+		'type_unit': service_doc.type_unit,  # نوع الوحدة من Service
+		'unit_type': unit_type  # محول إلى مدة/كمية
 	}
 
 @frappe.whitelist()
