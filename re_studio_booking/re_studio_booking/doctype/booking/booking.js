@@ -149,6 +149,42 @@ frappe.ui.form.on('Booking Service Item', {
 	}
 });
 
+// ================ Package Service Item Events ================
+frappe.ui.form.on('Package Service Item', {
+	quantity: function(frm, cdt, cdn) {
+		// إعادة حساب المبلغ عند تغيير الكمية
+		calculate_package_service_item_total(frm, cdt, cdn);
+	},
+	
+	package_price: function(frm, cdt, cdn) {
+		// إعادة حساب المبلغ عند تغيير سعر الباقة
+		calculate_package_service_item_total(frm, cdt, cdn);
+	},
+	
+	package_services_table_add: function(frm, cdt, cdn) {
+		// حساب المبلغ للصف الجديد
+		calculate_package_service_item_total(frm, cdt, cdn);
+	}
+});
+
+function calculate_package_service_item_total(frm, cdt, cdn) {
+	let row = locals[cdt][cdn];
+	
+	if (!row) return;
+	
+	let quantity = flt(row.quantity || 1);
+	let package_price = flt(row.package_price || 0);
+	
+	// حساب المبلغ الإجمالي
+	let amount = quantity * package_price;
+	frappe.model.set_value(cdt, cdn, 'amount', amount);
+	
+	// إعادة حساب إجماليات الباقة
+	setTimeout(function() {
+		calculate_package_totals_ui(frm);
+	}, 100);
+}
+
 function calculate_service_item_total(frm, cdt, cdn) {
 	let row = locals[cdt][cdn];
 	
@@ -555,9 +591,8 @@ function reload_package_services_with_photographer_discount(frm) {
 					row.service_name = service.service_name;
 					row.quantity = service.quantity;
 					row.base_price = service.base_price;
-					row.package_price = service.package_price;
-					row.photographer_discount_amount = service.photographer_discount_amount || service.package_price;
-					row.amount = service.amount;
+					row.package_price = service.package_price;  // السعر النهائي بعد خصم المصور
+					row.amount = service.amount;  // المبلغ الإجمالي
 					row['أجباري'] = service.is_mandatory || 0;
 				});
 				
@@ -617,8 +652,13 @@ function calculate_package_totals_ui(frm) {
 	let final_total = 0;
 	(frm.doc.package_services_table || []).forEach(function(row) {
 		const qty = flt(row.quantity || 1);
-		base_total += flt(row.base_price || 0) * qty;
-		final_total += flt(row.total_amount || (flt(row.package_price || 0) * qty));
+		const base_price = flt(row.base_price || 0);
+		const package_price = flt(row.package_price || 0);
+		const amount = flt(row.amount || 0);
+		
+		base_total += base_price * qty;
+		// استخدام amount إذا كان موجوداً، وإلا احسب من package_price × quantity
+		final_total += amount > 0 ? amount : (package_price * qty);
 	});
 	frm.set_value('base_amount_package', base_total);
 	frm.set_value('total_amount_package', final_total);

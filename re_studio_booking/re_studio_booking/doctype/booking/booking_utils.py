@@ -260,3 +260,44 @@ def format_currency_arabic(amount):
 	}.get(currency, currency)
 	
 	return f"{flt(amount, 2):,.2f} {currency_symbol}"
+
+
+def get_studio_working_days():
+	"""
+	جلب أيام العمل للاستديو من General Settings
+	
+	Returns:
+		list: قائمة بأسماء أيام العمل (Sunday, Monday, etc.)
+	"""
+	try:
+		if frappe.db.exists('DocType', 'General Settings'):
+			settings = frappe.get_single('General Settings')
+			working_days = []
+			
+			# خريطة أيام العمل
+			days_mapping = {
+				'sunday_working': 'Sunday',
+				'monday_working': 'Monday',
+				'tuesday_working': 'Tuesday',
+				'wednesday_working': 'Wednesday',
+				'thursday_working': 'Thursday',
+				'friday_working': 'Friday',
+				'saturday_working': 'Saturday'
+			}
+			
+			for field_name, day_name in days_mapping.items():
+				if hasattr(settings, field_name) and getattr(settings, field_name):
+					working_days.append(day_name)
+			
+			# إذا لم توجد إعدادات، استخدم الافتراضي (كل الأيام عدا الجمعة)
+			if not working_days:
+				working_days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday']
+			
+			return working_days
+		else:
+			# افتراضي: كل الأيام عدا الجمعة
+			return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday']
+	
+	except Exception as e:
+		frappe.logger().error(f"Error getting studio working days: {str(e)}")
+		return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday']
