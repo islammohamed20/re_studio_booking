@@ -15,8 +15,8 @@ function refresh_payment_summary(frm) {
 			if (r.message) {
 				frm.set_value('paid_amount', r.message.paid_amount);
 				frm.set_value('outstanding_amount', r.message.outstanding_amount);
-				frm.set_value('payment_status', r.message.payment_status);
-				frm.refresh_fields(['paid_amount','outstanding_amount','payment_status']);
+				frm.set_value('status', r.message.status);
+				frm.refresh_fields(['paid_amount','outstanding_amount','status']);
 			}
 		}
 	});
@@ -30,12 +30,17 @@ function aggregate_local_payments(frm) {
 	frm.set_value('paid_amount', total);
 	let invoice_total = flt(frm.doc.total_amount) || 0;
 	frm.set_value('outstanding_amount', invoice_total - total);
-	let status = 'Unpaid';
-	if (total > 0 && total < invoice_total) status = 'Partially Paid';
-	else if (invoice_total && total === invoice_total) status = 'Paid';
-	else if (invoice_total && total > invoice_total) status = 'Overpaid';
-	frm.set_value('payment_status', status);
-	frm.refresh_fields(['paid_amount','outstanding_amount','payment_status']);
+	
+	// تحديث الحالة محلياً للفواتير الجديدة
+	if (invoice_total > 0) {
+		if (total >= invoice_total) {
+			frm.set_value('status', 'Paid');
+		} else if (total > 0) {
+			frm.set_value('status', 'Partially Paid');
+		}
+	}
+	
+	frm.refresh_fields(['paid_amount','outstanding_amount','status']);
 }
 
 frappe.ui.form.on('Booking Invoice', {
@@ -91,21 +96,28 @@ frappe.ui.form.on('Booking Invoice', {
 				frm.set_value('start_time', b.start_time);
 				frm.set_value('end_time', b.end_time);
 				frm.set_value('client', b.client);
-				frm.set_value('customer_name', b.client_name || b.customer_name);
+				frm.set_value('client_name', b.client_name || b.customer_name);
+				// Map client_email from Booking to customer_email in Invoice
 				frm.set_value('customer_email', b.client_email || b.customer_email);
-				// Use updated Booking phone field (was client_phone previously)
-				frm.set_value('client_phone', b.phone || b.client_phone);
+				// Use phone field consistently
+				frm.set_value('phone', b.phone);
+				frm.set_value('mobile_no', b.mobile_no);
 
-				// Map financials: paid_amount = booking deposit, calculate outstanding if total known
-				if (b.deposit_amount) {
-					frm.set_value('paid_amount', b.deposit_amount);
+				// Map financials: set total_amount and calculate outstanding
+				// Get correct total based on booking type
+				let booking_total = 0;
+				if (b.booking_type === 'Service') {
+					booking_total = b.total_amount || 0;
+				} else if (b.booking_type === 'Package') {
+					// Package bookings use total_amount_package field
+					booking_total = b.total_amount_package || b.total_amount || 0;
 				}
-				// Set invoice total_amount from booking total_amount
-				if (b.total_amount) {
-					frm.set_value('total_amount', b.total_amount);
-					let total = b.total_amount;
-					let paid = b.deposit_amount || frm.doc.paid_amount || 0;
-					frm.set_value('outstanding_amount', total - paid);
+				
+				if (booking_total > 0) {
+					frm.set_value('total_amount', booking_total);
+					// لا نضبط paid_amount هنا - سيتم حسابه من payment_table
+					// سيتم حساب outstanding_amount بعد ملء payment_table
+					frm.refresh_field('total_amount');
 				}
 
 				// Force refresh booking_type dependent UI
@@ -124,6 +136,7 @@ frappe.ui.form.on('Booking Invoice', {
 				// Clear existing child tables
 				frm.clear_table('selected_services_table');
 				frm.clear_table('package_services_table');
+				frm.clear_table('payment_table');  // مسح جدول المدفوعات أيضاً
 
 				// Fetch child tables through a server method to ensure proper structure
 				frappe.call({
@@ -131,7 +144,7 @@ frappe.ui.form.on('Booking Invoice', {
 					args: { booking: b.name },
 				}).then(res => {
 					if (res && res.message) {
-						const { services, package_services } = res.message;
+						const { services, package_services, package_dates } = res.message;
 						(services || []).forEach(row => {
 							const d = frm.add_child('selected_services_table');
 							Object.assign(d, row);
@@ -142,6 +155,43 @@ frappe.ui.form.on('Booking Invoice', {
 						});
 						frm.refresh_field('selected_services_table');
 						frm.refresh_field('package_services_table');
+						
+						// إضافة العربون كأول دفعة في جدول المدفوعات
+						if (b.deposit_amount && b.deposit_amount > 0) {
+							const deposit_row = frm.add_child('payment_table');
+							deposit_row.date = b.booking_date || frappe.datetime.get_today();
+							deposit_row.paid_amount = b.deposit_amount;
+							deposit_row.payment_method = b.payment_method || 'Cash';
+							deposit_row.transaction_reference_number = `عربون حجز ${b.name}`;
+							frm.refresh_field('payment_table');
+						}
+						
+						// ملء جدول المدفوعات بتواريخ الباقة (Package فقط) - بعد العربون
+						if (b.booking_type === 'Package' && package_dates && package_dates.length > 0) {
+							// إضافة صف لكل تاريخ
+							package_dates.forEach((date_row) => {
+								const payment_row = frm.add_child('payment_table');
+								payment_row.date = date_row.booking_date;
+								payment_row.paid_amount = 0; // يمكن تعديله لاحقاً
+								// payment_method سيتم ملؤه يدوياً
+							});
+							
+							frm.refresh_field('payment_table');
+							
+							frappe.show_alert({
+								message: `تم إضافة العربون + ${package_dates.length} صف للمدفوعات بناءً على تواريخ الباقة`,
+								indicator: 'green'
+							}, 5);
+						} else if (b.deposit_amount && b.deposit_amount > 0) {
+							// عرض تنبيه للعربون فقط (Service bookings)
+							frappe.show_alert({
+								message: `تم إضافة العربون (${b.deposit_amount} ريال) إلى جدول المدفوعات`,
+								indicator: 'green'
+							}, 5);
+						}
+						
+						// إعادة حساب المدفوعات لتحديث paid_amount و outstanding_amount
+						refresh_payment_summary(frm);
 					}
 				}).catch(() => {
 					// Fallback if whitelisted method not yet available (cache / deploy delay)

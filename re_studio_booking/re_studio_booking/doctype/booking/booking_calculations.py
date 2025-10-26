@@ -138,22 +138,26 @@ def set_default_deposit_percentage(booking_doc):
 
 def calculate_booking_datetime(booking_doc):
 	"""
-	حساب تاريخ ووقت الحجز
+	حساب تاريخ ووقت الحجز - مطلوب لـ Gantt view
 	
 	Args:
 		booking_doc: مستند الحجز
 	"""
-	if getattr(booking_doc, 'booking_date', None) and hasattr(booking_doc, 'booking_time') and getattr(booking_doc, 'booking_time', None):
-		booking_datetime = f"{booking_doc.booking_date} {booking_doc.booking_time}:00"
-		booking_doc.booking_datetime = booking_datetime
-		if hasattr(booking_doc, 'duration') and getattr(booking_doc, 'duration', None):
-			try:
-				booking_dt = datetime.strptime(booking_datetime, "%Y-%m-%d %H:%M:%S")
-				duration_minutes = int(booking_doc.duration)
-				end_datetime = booking_dt + timedelta(minutes=duration_minutes)
-				booking_doc.booking_end_datetime = end_datetime.strftime("%Y-%m-%d %H:%M:%S")
-			except Exception:
-				pass
+	# For Service bookings: combine booking_date + start_time
+	if booking_doc.booking_type == 'Service' and getattr(booking_doc, 'booking_date', None) and getattr(booking_doc, 'start_time', None):
+		try:
+			booking_datetime = f"{booking_doc.booking_date} {booking_doc.start_time}"
+			booking_doc.booking_datetime = booking_datetime
+		except Exception:
+			pass
+	
+	# For Package bookings: use booking_date only (as packages can have multiple dates)
+	elif booking_doc.booking_type == 'Package' and getattr(booking_doc, 'booking_date', None):
+		try:
+			booking_datetime = f"{booking_doc.booking_date} 00:00:00"
+			booking_doc.booking_datetime = booking_datetime
+		except Exception:
+			pass
 
 
 def calculate_time_usage(booking_doc):
@@ -173,9 +177,26 @@ def calculate_time_usage(booking_doc):
 				booking_doc.total_booked_hours = round(hours, 2)
 				
 				# ترحيل إجمالي الساعات إلى جدول الخدمات المختارة
+				# (فقط للخدمات الغير مرنة - الخدمات المرنة تحتفظ بكميتها الخاصة)
 				if hasattr(booking_doc, 'selected_services_table') and booking_doc.selected_services_table:
+					# جلب is_flexible_service لجميع الخدمات مرة واحدة لتحسين الأداء
+					service_names = [getattr(row, 'service', None) for row in booking_doc.selected_services_table if getattr(row, 'service', None)]
+					flexible_services = {}
+					if service_names:
+						flexible_data = frappe.get_all('Service', 
+							filters={'name': ['in', service_names]},
+							fields=['name', 'is_flexible_service']
+						)
+						flexible_services = {s.name: s.is_flexible_service for s in flexible_data}
+					
+					# تحديث الكميات
 					for row in booking_doc.selected_services_table:
-						row.quantity = booking_doc.total_booked_hours
+						service_name = getattr(row, 'service', None)
+						if service_name:
+							is_flexible = flexible_services.get(service_name, 0)
+							# فقط تحديث الكمية للخدمات غير المرنة
+							if not is_flexible:
+								row.quantity = booking_doc.total_booked_hours
 			except Exception:
 				pass
 
@@ -272,12 +293,15 @@ def calculate_service_totals(booking_doc):
 		except Exception:
 			base_price = 0
 		
+		# تخزين الأسعار قبل وبعد الخصم لتوفيرها في الواجهات الأخرى
+		service_item.pre_discount_price = base_price
 		service_item.service_price = base_price
 		discounted_price = base_price
 		
 		# طبق الخصم فقط إذا كانت الخدمة ضمن خدمات المصور
 		if photographer_discount_pct > 0 and service_item.service in allowed_services:
 			discounted_price = base_price * (1 - photographer_discount_pct / 100.0)
+		service_item.discounted_price = discounted_price
 		
 		quantity = float(getattr(service_item, 'quantity', 1) or 1)
 		base_total += quantity * base_price
@@ -309,7 +333,8 @@ def calculate_package_totals(booking_doc):
 	base_total_package = 0
 	total_after_discount_package = 0
 	
-	if hasattr(booking_doc, 'package_services_table') and booking_doc.package_services_table:
+	has_package_rows = hasattr(booking_doc, 'package_services_table') and booking_doc.package_services_table
+	if has_package_rows:
 		for service_row in booking_doc.package_services_table:
 			quantity = flt(getattr(service_row, 'quantity', 0))
 			
@@ -331,9 +356,24 @@ def calculate_package_totals(booking_doc):
 			
 			# تحديث amount في الصف
 			service_row.amount = final_amount_row
+	else:
+		# fallback: استخدم سعر الباقة مباشرة إن لم يكن هناك صفوف خدمات
+		package_name = getattr(booking_doc, 'package', None)
+		if package_name:
+			try:
+				package_doc = frappe.get_doc("Package", package_name)
+				if getattr(package_doc, 'final_price', None):
+					base_total_package = flt(package_doc.final_price)
+					total_after_discount_package = base_total_package
+			except Exception:
+				pass
 	
 	booking_doc.base_amount_package = base_total_package
 	booking_doc.total_amount_package = total_after_discount_package
+
+	# fallback افتراضي للعربون إذا ظل فارغاً بعد الحسابات السابقة
+	if getattr(booking_doc, 'deposit_percentage', None) in (None, ""):
+		booking_doc.deposit_percentage = 30
 
 
 # ============ Unified Pricing Recompute ============

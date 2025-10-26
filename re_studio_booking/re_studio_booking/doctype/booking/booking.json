@@ -6,6 +6,7 @@
  "default_view": "List",
  "doctype": "DocType",
  "engine": "InnoDB",
+ "is_calendar_and_gantt": 1,
  "field_order": [
    "customer_section",
    "client",
@@ -38,6 +39,7 @@
    "booking_date",
    "start_time",
    "end_time",
+   "booking_datetime",
    "total_booked_hours",
    "package_booking_dates",
    "used_hours",
@@ -86,6 +88,8 @@
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "\u0627\u0644\u062d\u0627\u0644\u0629",
    "options": "\nConfirmed\nCancelled\nCompleted"
   },
@@ -210,19 +214,32 @@
    "depends_on": "eval:doc.booking_type=='Service'",
    "fieldname": "booking_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "is_calendar_and_gantt": 1,
    "label": "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u062d\u062c\u0632"
   },
   {
    "depends_on": "eval:doc.booking_type=='Service'",
    "fieldname": "start_time",
    "fieldtype": "Time",
+   "is_calendar_and_gantt": 1,
    "label": "\u0648\u0642\u062a \u0627\u0644\u0628\u062f\u0627\u064a\u0629"
   },
   {
    "depends_on": "eval:doc.booking_type=='Service'",
    "fieldname": "end_time",
    "fieldtype": "Time",
+   "is_calendar_and_gantt": 1,
    "label": "\u0648\u0642\u062a \u0627\u0644\u0646\u0647\u0627\u064a\u0629"
+  },
+  {
+   "fieldname": "booking_datetime",
+   "fieldtype": "Datetime",
+   "label": "Booking DateTime",
+   "hidden": 1,
+   "read_only": 1,
+   "is_calendar_and_gantt": 1
   },
   {
    "depends_on": "eval:doc.booking_type=='Service'",

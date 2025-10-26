@@ -10,9 +10,7 @@ import json
 
 # استيراد دوال المساعدة من booking_utils
 from .booking_utils import (
-	validate_paid_amount,
-	calculate_services_with_photographer_discount,
-	recalculate_package_services_on_package_change
+	validate_paid_amount
 )
 
 # استيراد دوال التحقق من booking_validations
@@ -31,8 +29,8 @@ from .booking_calculations import (
 	calculate_booking_datetime,
 	calculate_time_usage,
 	compute_package_hours_usage,
-	calculate_service_totals,
-	calculate_package_totals,
+	calculate_service_totals as calculate_service_totals_logic,
+	calculate_package_totals as calculate_package_totals_logic,
 	recompute_pricing,
 	calculate_booking_total
 )
@@ -41,140 +39,88 @@ class Booking(Document):
 	# ------------------------ Core Lifecycle ------------------------ #
 	def before_save(self):
 		"""تنفيذ العمليات قبل الحفظ"""
-		# 0. تعيين الموظف الحالي تلقائياً
 		if not self.current_employee:
 			self.current_employee = frappe.session.user
-		
-		# 1. تغيير الحالة إلى Confirmed عند الحفظ
+
 		if self.status != 'Confirmed':
 			self.status = 'Confirmed'
-		
-		# 2. حساب مبلغ العربون تلقائياً
-		calculate_deposit_amount(self)
-		
-		# 3. التحقق من أيام العمل حسب General Settings
+
 		validate_studio_working_day(self)
-		
-		# 4. التحقق من صحة المبلغ المدفوع
-		validate_paid_amount(self)
-	
+		calculate_deposit_amount(self)
+
 	def validate(self):
 		"""Validate booking data and calculate totals"""
-		# 1. Validate dates (booking date not in past)
+		if not self.flags.get('ignore_version'):
+			self.flags.ignore_version = True
+
 		validate_dates(self)
-		
-		# 2. Check availability (no overlapping bookings)
 		validate_availability(self)
-		
-		# 3. Calculate booking datetime
 		calculate_booking_datetime(self)
-		
-		# 4. Calculate time usage for Service bookings
 		calculate_time_usage(self)
-		
-		# 5. Package hours usage (before pricing so quantities can reference remaining hours)
+
 		if self.booking_type == 'Package':
 			compute_package_hours_usage(self)
-			# Validate package hours after computing them
 			validate_package_hours(self)
-		
-		# 6. دمج تكرار نفس الخدمة في جدول الخدمات المختارة (جمع الساعات بدلاً من تكرار الصفوف)
+
 		if self.booking_type == 'Service':
 			self._deduplicate_selected_services()
 		elif self.booking_type == 'Package':
 			self._deduplicate_package_services()
-		
-		# 7. Set default deposit percentage
+
 		set_default_deposit_percentage(self)
-		
-		# 8. Unified pricing recompute (consolidated flow)
 		recompute_pricing(self)
-		
-		# 9. Legacy calculate_booking_total (kept for compatibility)
 		calculate_booking_total(self)
+		calculate_deposit_amount(self)
+		validate_paid_amount(self)
 
 	def on_trash(self):
 		"""منع حذف الحجز إذا كان مدفوعاً بالكامل (ما عدا Administrator)"""
 		check_deletion_permission(self)
-	
+
 	def before_cancel(self):
 		"""منع إلغاء الحجز إذا كان مدفوعاً بالكامل (ما عدا Administrator)"""
 		check_deletion_permission(self)
 
-	# ملاحظة: تم حذف جميع دوال الـ fallback غير المستخدمة (_fallback_validate_dates, _fallback_validate_availability, etc.)
-	# لأنها كانت تضيف complexity غير ضروري ولم تعد مطلوبة بعد تبسيط validate()
+	def on_update(self):
+		"""إرسال تأكيد الحجز بعد التحويل إلى Confirmed مرة واحدة"""
+		if getattr(self, 'status', None) == 'Confirmed' and not getattr(self, 'confirmation_sent', False):
+			self.send_confirmation()
+			self.confirmation_sent = 1
 
-	def _load_photographer_context(self):
-		"""Prepare discount percentage and allowed services list for the photographer."""
-		ctx = {
-			"discount_pct": 0.0,
-			"allowed_services": set()
-		}
-		if getattr(self, 'photographer_b2b', False) and getattr(self, 'photographer', None):
-			try:
-				ctx["discount_pct"] = float(frappe.db.get_value("Photographer", self.photographer, "discount_percentage") or 0)
-				photographer_services = frappe.get_all(
-					"Photographer Service",
-					filters={"parent": self.photographer, "is_active": 1},
-					fields=["service"]
+	def send_confirmation(self):
+		"""إرسال بريد تأكيد الحجز للعميل"""
+		if not getattr(self, 'client', None):
+			return
+		client_email = frappe.db.get_value("Client", self.client, "email_id")
+		if not client_email:
+			return
+		
+		# التحقق من وجود حساب بريد صادر قبل الإرسال
+		try:
+			frappe.sendmail(
+				recipients=[client_email],
+				subject=_("تأكيد الحجز - {0}").format(self.name),
+				message=(
+					"""<p>مرحباً،</p>
+					<p>تم تأكيد حجزك رقم {0} في تاريخ {1} الساعة {2}.</p>
+					<p>نشكرك على اختيار Re Studio.</p>
+					""".format(self.name, getattr(self, 'booking_date', ''), getattr(self, 'start_time', ''))
 				)
-				ctx["allowed_services"] = {ps.service for ps in photographer_services}
-			except Exception:
-				ctx["discount_pct"] = 0.0
-		return ctx
-
-	def _sync_selected_services_quantity_from_time(self):
-		"""
-		تحديث كمية الخدمات المختارة من إجمالي الساعات المحجوزة.
-		ملاحظة: الخدمات المرنة لا يتم تحديث كميتها تلقائياً.
-		"""
-		if self.booking_type != 'Service':
-			return
-		if not getattr(self, 'total_booked_hours', None):
-			return
-		if not hasattr(self, 'selected_services_table') or not self.selected_services_table:
-			return
-		
-		total_hours = flt(self.total_booked_hours)
-		if total_hours <= 0:
-			return
-		
-		# المرور على كل الخدمات المختارة
-		for row in self.selected_services_table:
-			try:
-				service_name = getattr(row, 'service', None)
-				if not service_name:
-					continue
-				
-				# التحقق من أن الخدمة ليست مرنة
-				is_flexible = frappe.db.get_value('Service', service_name, 'is_flexible_service')
-				
-				if not is_flexible:
-					# تحديث الكمية = إجمالي الساعات (للخدمات غير المرنة فقط)
-					row.quantity = total_hours
-					frappe.logger().debug(
-						f"📊 تحديث كمية الخدمة {service_name}: {total_hours} ساعة"
-					)
-				else:
-					frappe.logger().debug(
-						f"⚙️ الخدمة {service_name} مرنة - لا يتم تحديث الكمية"
-					)
-			except Exception as e:
-				frappe.logger().error(f"خطأ في تحديث كمية الخدمة: {str(e)}")
-				pass
+			)
+		except Exception as e:
+			# تسجيل الخطأ دون إيقاف عملية الحفظ
+			frappe.log_error(
+				message=f"فشل إرسال بريد تأكيد الحجز {self.name}: {str(e)}",
+				title="خطأ في إرسال البريد الإلكتروني"
+			)
 
 	def _deduplicate_selected_services(self):
-		"""دمج الصفوف المكررة لنفس الخدمة داخل selected_services_table:
-		- يتم جمع الحقل quantity (أو اعتباره 1 إذا فارغ)
-		- الاحتفاظ بأول صف كصف رئيسي وتحديث كميته
-		- تجاهل الصفوف المدموجة الأخرى (إزالتها)
-		يُنفذ قبل إعادة الحساب لتنعكس القيم في التسعير.
-		"""
+		"""دمج الصفوف المكررة لنفس الخدمة داخل selected_services_table."""
 		try:
 			if not hasattr(self, 'selected_services_table') or not self.selected_services_table:
 				return
 			service_map = {}
-			order = []  # للمحافظة على ترتيب الظهور الأول
+			order = []
 			for row in list(self.selected_services_table):
 				service = getattr(row, 'service', None)
 				if not service:
@@ -185,35 +131,25 @@ class Booking(Document):
 				except Exception:
 					qty = 0.0
 				if qty == 0:
-					# لو لم تُحدد كمية اعتبرها 1 (اختيار خدمة يعني ساعة واحدة مبدئياً)
 					qty = 1.0
 				if service not in service_map:
 					service_map[service] = row
 					order.append(service)
-					# مهيأة بالكمية الحالية (أول مرة)
 					row.quantity = qty
 				else:
-					# دمج في الصف الأصلي
 					existing = service_map[service]
 					try:
 						existing_qty = float(getattr(existing, 'quantity', 0) or 0)
 					except Exception:
 						existing_qty = 0.0
 					existing.quantity = existing_qty + qty
-			# إعادة بناء القائمة بالترتيب الأصلي بدون التكرارات
-			merged_rows = [service_map[s] for s in order]
-			# استبدال الجدول كاملاً
-			self.set('selected_services_table', merged_rows)
-		except Exception as e:
-			frappe.log_error(f"deduplicate_selected_services_failed: {str(e)}")
+			sorted_rows = [service_map[s] for s in order]
+			self.set('selected_services_table', sorted_rows)
+		except Exception as err:
+			frappe.log_error(f"deduplicate_selected_services_failed: {str(err)}")
 
 	def _deduplicate_package_services(self):
-		"""دمج الصفوف المكررة لنفس الخدمة داخل package_services_table (خدمات الباقة):
-		- يجمع الكمية
-		- يجمع الخصم photographer_discount_amount
-		- يعيد حساب amount على أساس base_price * quantity - discount
-		ينفذ قبل التجميع الكلي لأسعار الباقة لتفادي التكرار و تضخيم المجموع.
-		"""
+		"""دمج الصفوف المكررة لنفس الخدمة داخل package_services_table."""
 		try:
 			if self.booking_type != 'Package':
 				return
@@ -247,12 +183,10 @@ class Booking(Document):
 					except Exception:
 						existing_qty = 0.0
 					existing.quantity = existing_qty + qty
-					# جمع الخصومات
 					try:
 						existing.photographer_discount_amount = float(getattr(existing, 'photographer_discount_amount', 0) or 0) + photographer_discount_amount
 					except Exception:
 						pass
-			# إعادة حساب amount لكل صف مدموج
 			for service_code in order:
 				row = service_map[service_code]
 				bp = float(getattr(row, 'base_price', 0) or 0)
@@ -260,393 +194,75 @@ class Booking(Document):
 				discount = float(getattr(row, 'photographer_discount_amount', 0) or 0)
 				line_base = bp * q
 				row.amount = max(line_base - discount, 0)
-			merged_rows = [service_map[s] for s in order]
-			self.set('package_services_table', merged_rows)
-		except Exception as e:
-			frappe.log_error(f"deduplicate_package_services_failed: {str(e)}")
-
-	def _build_service_rows(self, ctx):
-		"""Populate pricing related fields on service rows (selected_services_table & booking_service_items)."""
-		# Process selected_services_table (primary for pricing now)
-		if self.booking_type != 'Service':
-			return
-		discount_pct = ctx["discount_pct"] if ctx["discount_pct"] > 0 else 0
-		allowed = ctx["allowed_services"]
-		if hasattr(self, 'selected_services_table') and self.selected_services_table:
-			for row in self.selected_services_table:
-				if not getattr(row, 'service', None):
-					continue
-				base_price = 0
-				try:
-					base_price = float(frappe.db.get_value("Service", row.service, "price") or 0)
-				except Exception:
-					base_price = 0
-				row.service_price = base_price
-				applied_pct = discount_pct if (discount_pct > 0 and row.service in allowed) else 0
-				row.discounted_price = base_price * (1 - applied_pct/100.0) if applied_pct else base_price
-				qty = float(getattr(row, 'quantity', 1) or 1)
-				row.total_amount = qty * row.discounted_price
-
-		# Keep legacy booking_service_items updated (mirror) if exists
-		if hasattr(self, 'booking_service_items') and self.booking_service_items:
-			for row in self.booking_service_items:
-				if not getattr(row, 'service', None):
-					continue
-				base_price = 0
-				try:
-					base_price = float(frappe.db.get_value("Service", row.service, "price") or 0)
-				except Exception:
-					base_price = 0
-				row.service_price = base_price
-				applied_pct = discount_pct if (discount_pct > 0 and row.service in allowed) else 0
-				row.discounted_price = base_price * (1 - applied_pct/100.0) if applied_pct else base_price
-				qty = float(getattr(row, 'quantity', 1) or 1)
-				row.total_amount = qty * row.discounted_price
-
-	def _aggregate_service_totals(self):
-		if self.booking_type != 'Service':
-			return
-		base_total = 0.0
-		final_total = 0.0
-		if hasattr(self, 'selected_services_table') and self.selected_services_table:
-			for row in self.selected_services_table:
-				price = float(getattr(row, 'service_price', 0) or 0)
-				qty = float(getattr(row, 'quantity', 1) or 1)
-				base_total += price * qty
-				final_total += float(getattr(row, 'total_amount', 0) or 0)
-		self.base_amount = round(base_total, 2)
-		self.total_amount = round(final_total, 2)
-
-	def _build_package_rows(self, ctx):
-		if self.booking_type != 'Package' or not getattr(self, 'package', None):
-			return
-		# Reuse existing fetch if table empty; otherwise adjust discount only
-		if not getattr(self, 'package_services_table', None):
-			self.populate_package_services()
-		
-		discount_pct = ctx["discount_pct"] if ctx["discount_pct"] > 0 else 0
-		allowed = ctx["allowed_services"]
-		photographer = getattr(self, 'photographer', None)
-		photographer_b2b = getattr(self, 'photographer_b2b', False)
-		
-		# جلب بيانات المصور إذا كان B2B مفعل
-		photographer_services = {}
-		if photographer and photographer_b2b and discount_pct > 0:
-			try:
-				photographer_doc = frappe.get_doc('Photographer', photographer)
-				if photographer_doc.get('b2b'):
-					for ps in photographer_doc.get('services', []):
-						photographer_services[ps.service] = {
-							'discounted_price': flt(ps.get('discounted_price') or 0),
-							'base_price': flt(ps.get('base_price') or 0)
-						}
-			except Exception as e:
-				frappe.logger().error(f"خطأ في جلب خدمات المصور: {str(e)}")
-		
-		for row in (self.package_services_table or []):
-			service_name = getattr(row, 'service', None)
-			base_price = float(getattr(row, 'base_price', 0) or 0)
-			package_price = float(getattr(row, 'package_price', 0) or base_price or 0)
-			
-			# Ensure base_price is set (from Service master)
-			if not base_price and package_price:
-				row.base_price = package_price
-				base_price = package_price
-			
-			qty = float(getattr(row, 'quantity', 1) or 1)
-			
-			# Preserve the mandatory flag (أجباري) - don't overwrite it
-			# This field is set when package services are first populated from Package
-			
-			# حساب السعر النهائي بعد خصم المصور
-			final_price_per_unit = package_price  # ابدأ بسعر الباقة
-			
-			if service_name in photographer_services:
-				# استخدام السعر المخصوم من المصور إذا كان موجوداً
-				if photographer_services[service_name]['discounted_price'] > 0:
-					final_price_per_unit = photographer_services[service_name]['discounted_price']
-				# وإلا استخدام نسبة الخصم العامة
-				elif discount_pct > 0 and service_name in allowed:
-					final_price_per_unit = package_price * (1 - discount_pct / 100.0)
-			
-			# تعيين القيم في الحقول الصحيحة
-			row.package_price = final_price_per_unit  # السعر النهائي للوحدة بعد الخصم
-			row.amount = final_price_per_unit * qty    # المبلغ الإجمالي
-			
-			frappe.logger().debug(
-				f"📊 خدمة {service_name}: base={base_price}, "
-				f"final_price={final_price_per_unit}, qty={qty}, amount={row.amount}"
-			)
-
-	def _aggregate_package_totals(self):
-		if self.booking_type != 'Package':
-			return
-		base_total = 0.0
-		final_total = 0.0
-		for row in (self.package_services_table or []):
-			qty = float(getattr(row, 'quantity', 1) or 1)
-			bp = float(getattr(row, 'base_price', 0) or 0)
-			base_total += bp * qty
-			final_total += float(getattr(row, 'amount', 0) or 0)
-		self.base_amount_package = round(base_total, 2)
-		self.total_amount_package = round(final_total, 2)
-
-	def _validate_paid_vs_deposit(self):
-		"""تحقق إلزامي قبل الحفظ:
-		1. يجب أن يكون paid_amount >= deposit_amount (أو يساوي كامل المبلغ الإجمالي).
-		2. لو يوجد حد أدنى (General Settings) للمبلغ (الحد الأدنى لمبلغ الحجز) وتجاوزناه في deposit_amount فسنلتزم به.
-		3. في حال لم يتم احتساب الإجمالي بعد، نتجاوز التحقق.
-		"""
-		try:
-			paid = float(getattr(self, 'paid_amount', 0) or 0)
-			deposit = float(getattr(self, 'deposit_amount', 0) or 0)
-			if self.booking_type == 'Service':
-				full_total = float(getattr(self, 'total_amount', 0) or 0)
-			else:
-				full_total = float(getattr(self, 'total_amount_package', 0) or 0)
-			if full_total <= 0:
-				return
-			if deposit > full_total:
-				deposit = full_total
-			# التحقق الأساسي
-			if deposit > 0 and paid < deposit and paid < full_total:
-				frappe.throw(_(f"المبلغ المدفوع ({paid}) أقل من العربون المطلوب ({deposit}). يجب دفع العربون أو المبلغ الكامل ({full_total})."))
-		except Exception as e:
-			frappe.log_error(f"validate_paid_vs_deposit_failed: {str(e)}")
-
-	def _auto_set_payment_status(self):
-		try:
-			paid = float(getattr(self, 'paid_amount', 0) or 0)
-			if self.booking_type == 'Service':
-				full_total = float(getattr(self, 'total_amount', 0) or 0)
-			else:
-				full_total = float(getattr(self, 'total_amount_package', 0) or 0)
-			if full_total <= 0:
-				return
-			if paid >= full_total and full_total > 0:
-				self.payment_status = 'Paid'
-			elif paid > 0:
-				self.payment_status = 'Partially Paid'
-			else:
-				# keep existing or set default
-				if not getattr(self, 'payment_status', None):
-					self.payment_status = 'Confirmed'
-		except Exception:
-			pass
-
-	def calculate_booking_datetime(self):
-		"""حساب تاريخ ووقت الحجز"""
-		if getattr(self, 'booking_date', None) and hasattr(self, 'booking_time') and getattr(self, 'booking_time', None):
-			booking_datetime = f"{self.booking_date} {self.booking_time}:00"
-			self.booking_datetime = booking_datetime
-			if hasattr(self, 'duration') and getattr(self, 'duration', None):
-				try:
-					from datetime import datetime, timedelta
-					booking_dt = datetime.strptime(booking_datetime, "%Y-%m-%d %H:%M:%S")
-					duration_minutes = int(self.duration)
-					end_datetime = booking_dt + timedelta(minutes=duration_minutes)
-					self.booking_end_datetime = end_datetime.strftime("%Y-%m-%d %H:%M:%S")
-				except Exception:
-					pass
-
-	def calculate_time_usage(self):
-		"""حساب الوقت المستخدم"""
-		from frappe.utils import time_diff_in_seconds
-		if self.booking_type == 'Service':
-			if getattr(self, 'start_time', None) and getattr(self, 'end_time', None):
-				try:
-					seconds = time_diff_in_seconds(self.end_time, self.start_time)
-					if seconds < 0:
-						frappe.throw(_('وقت النهاية يجب أن يكون بعد وقت البداية'))
-					self.total_booked_hours = round(seconds / 3600.0, 2)
-					# ترحيل إجمالي الساعات إلى جدول الخدمات المختارة
-					if hasattr(self, 'selected_services_table') and self.selected_services_table:
-						for row in self.selected_services_table:
-							row.quantity = self.total_booked_hours
-				except Exception:
-					pass
-
-	def set_default_deposit_percentage(self):
-		"""تعيين نسبة العربون الافتراضية"""
-		if getattr(self, 'deposit_percentage', None) not in (None, ""):
-			return
-		try:
-			settings = frappe.db.get_singles_dict('General Settings') if frappe.db.exists('DocType', 'General Settings') else {}
-			val = None
-			for key in ('نسبة العربون (%)', 'deposit_percentage', 'نسبة_العربون_%'):
-				if key in settings and settings.get(key) is not None:
-					val = settings.get(key)
-					break
-			if val is not None:
-				self.deposit_percentage = flt(val)
-		except Exception:
-			pass
-		# fallback النهائي
-		if getattr(self, 'deposit_percentage', None) in (None, ""):
-			self.deposit_percentage = 30
-
-	def calculate_booking_total(self):
-		"""حساب الإجمالي الكلي للحجز"""
-		if self.booking_type == 'Service':
-			self.calculate_service_totals()
-		elif self.booking_type == 'Package':
-			self.calculate_package_totals()
-
-	def calculate_service_totals(self):
-		"""حساب إجماليات حجز الخدمات"""
-		if self.booking_type != "Service" or not hasattr(self, 'selected_services_table'):
-			return
-		
-		# اجلب خصم المصور فقط إن كان B2B
-		photographer_discount_pct = 0
-		allowed_services = set()
-		if getattr(self, 'photographer_b2b', False) and getattr(self, 'photographer', None):
-			try:
-				photographer_discount_pct = float(frappe.db.get_value("Photographer", self.photographer, "discount_percentage") or 0)
-				photographer_services = frappe.get_all("Photographer Service", filters={"parent": self.photographer, "is_active": 1}, fields=["service"])
-				allowed_services = {ps.service for ps in photographer_services}
-			except Exception:
-				photographer_discount_pct = 0
-		
-		base_total = 0
-		total_booking_amount = 0
-		
-		for service_item in self.selected_services_table:
-			if not getattr(service_item, 'service', None):
-				continue
-			try:
-				base_price = float(frappe.db.get_value("Service", service_item.service, "price") or 0)
-			except Exception:
-				base_price = 0
-			
-			service_item.service_price = base_price
-			discounted_price = base_price
-			
-			# طبق الخصم فقط إذا كانت الخدمة ضمن خدمات المصور
-			if photographer_discount_pct > 0 and service_item.service in allowed_services:
-				discounted_price = base_price * (1 - photographer_discount_pct / 100.0)
-			
-			quantity = float(getattr(service_item, 'quantity', 1) or 1)
-			base_total += quantity * base_price
-			
-			if discounted_price > 0 and discounted_price != base_price:
-				service_item.total_amount = quantity * discounted_price
-			else:
-				service_item.total_amount = quantity * base_price
-			
-			total_booking_amount += service_item.total_amount
-		
-		self.base_amount = base_total
-		self.total_amount = total_booking_amount
-
-	def calculate_package_totals(self):
-		"""حساب إجماليات الباقة"""
-		if self.booking_type != "Package":
-			return
-		
-		try:
-			base_total = 0
-			final_total = 0
-			
-			if hasattr(self, 'package_services_table') and self.package_services_table:
-				for row in self.package_services_table:
-					base_amount = flt(getattr(row, 'base_price', 0) or 0) * flt(getattr(row, 'quantity', 1) or 1)
-					base_total += base_amount
-					final_total += flt(getattr(row, 'amount', 0) or 0)
-			else:
-				# إذا لم توجد خدمات، احسب من سعر الباقة مباشرة
-				if getattr(self, 'package', None):
-					try:
-						package_doc = frappe.get_doc("Package", self.package)
-						if package_doc.final_price:
-							base_total = flt(package_doc.final_price)
-							final_total = base_total
-					except Exception:
-						pass
-			
-			self.base_amount_package = base_total
-			self.total_amount_package = final_total
-			
-		except Exception as e:
-			frappe.log_error(f"Error calculating package totals: {str(e)}")
-
-	def on_update(self):
-		"""Actions after document is saved"""
-		pass
+			sorted_rows = [service_map[s] for s in order]
+			self.set('package_services_table', sorted_rows)
+		except Exception as err:
+			frappe.log_error(f"deduplicate_package_services_failed: {str(err)}")
 
 	def populate_package_services(self):
-		"""Populate package services table when package is selected"""
-		pass
+		"""Populate package services with photographer discounts applied."""
+		if self.booking_type != "Package" or not getattr(self, 'package', None):
+			return
 
-# -------------- Public API Helpers -------------- #
+		self.package_services_table = []
+		package_doc = frappe.get_doc("Package", self.package)
+		package_services = package_doc.package_services or []
+		base_sum = 0.0
+		discounted_sum = 0.0
 
-@frappe.whitelist()
-def recalc_booking_deposit(booking: str):
-	"""Recompute pricing & deposit & payment status for a booking and save it."""
-	if not booking:
-		frappe.throw('Booking required')
-	doc = frappe.get_doc('Booking', booking)
-	# إعادة حساب التسعير والعربون
-	recompute_pricing(doc)
-	calculate_booking_total(doc)
-	doc.save()
-	return {
-		'booking': booking,
-		'deposit_amount': doc.deposit_amount,
-		'payment_status': doc.payment_status
-	}
+		photographer_discount = 0
+		photographer_services = {}
+		if getattr(self, 'photographer', None) and getattr(self, 'photographer_b2b', False):
+			try:
+				photographer_doc = frappe.get_doc('Photographer', self.photographer)
+				photographer_discount = flt(photographer_doc.discount_percentage or 0)
+				for ps in photographer_doc.get('services', []):
+					photographer_services[ps.service] = {
+						'discounted_price': flt(ps.get('discounted_price') or 0),
+						'base_price': flt(ps.get('base_price') or 0),
+						'allow_discount': ps.get('allow_discount', 0)
+					}
+			except Exception as err:
+				frappe.log_error(f"Error fetching photographer discount: {str(err)}")
 
-@frappe.whitelist()
-def debug_deposit_calculation(booking: str):
-	"""Debug deposit calculation showing step by step breakdown"""
-	if not booking:
-		frappe.throw('Booking required')
-	
-	doc = frappe.get_doc('Booking', booking)
-	
-	# Get deposit percentage from settings
-	settings = frappe.db.get_singles_dict('General Settings') if frappe.db.exists('DocType', 'General Settings') else {}
-	deposit_pct = None
-	for key in ('نسبة العربون (%)', 'deposit_percentage', 'نسبة_العربون_%'):
-		if key in settings and settings.get(key) is not None:
-			deposit_pct = float(settings.get(key))
-			break
-	
-	if deposit_pct is None:
-		deposit_pct = 30.0  # fallback
-	
-	# Get the basis amount
-	if doc.booking_type == 'Service':
-		basis_amount = float(getattr(doc, 'total_amount', 0) or 0)
-		basis_field = 'total_amount'
-	else:
-		basis_amount = float(getattr(doc, 'total_amount_package', 0) or 0)
-		basis_field = 'total_amount_package'
-	
-	# Calculate deposit step by step
-	step1 = basis_amount * deposit_pct  # المبلغ × النسبة
-	step2 = step1 / 100.0  # القسمة على 100
-	final_deposit = round(step2, 2)  # التقريب
-	
-	return {
-		'booking': booking,
-		'booking_type': doc.booking_type,
-		'basis_field': basis_field,
-		'basis_amount': basis_amount,
-		'deposit_percentage': deposit_pct,
-		'calculation_steps': {
-			'step1_multiply': f"{basis_amount} × {deposit_pct} = {step1}",
-			'step2_divide': f"{step1} ÷ 100 = {step2}",
-			'step3_round': f"round({step2}, 2) = {final_deposit}"
-		},
-		'calculated_deposit': final_deposit,
-		'current_deposit_amount': float(getattr(doc, 'deposit_amount', 0) or 0),
-		'matches': final_deposit == float(getattr(doc, 'deposit_amount', 0) or 0)
-	}
+		for service in package_services:
+			qty = float(service.quantity or 1)
+			try:
+				base_price = flt(frappe.db.get_value("Service", service.service, "price") or 0)
+			except Exception:
+				base_price = 0
 
+			package_price = flt(getattr(service, 'package_price', 0) or 0)
+			hourly_rate = package_price if package_price > 0 else base_price
+			photographer_rate = hourly_rate
 
+			if service.service in photographer_services:
+				service_config = photographer_services[service.service]
+				if service_config['discounted_price'] > 0:
+					photographer_rate = service_config['discounted_price']
+				elif photographer_discount > 0 and service_config['allow_discount']:
+					photographer_rate = hourly_rate * (1 - photographer_discount / 100.0)
 
-	# ------------------------ Calculations ------------------------ #
+			amount = qty * photographer_rate
+			is_mandatory = getattr(service, 'is_required', 0) or 0
+
+			self.append("package_services_table", {
+				"service": service.service,
+				"service_name": getattr(service, 'service_name', '') or service.service,
+				"quantity": qty,
+				"base_price": base_price,
+				"package_price": hourly_rate,
+				"photographer_discount_amount": photographer_rate,
+				"amount": amount,
+				"أجباري": is_mandatory
+			})
+			base_sum += qty * base_price
+			discounted_sum += amount
+
+		self.base_amount_package = round(base_sum, 2)
+		self.total_amount_package = round(discounted_sum, 2)
+
+		# ------------------------ Calculations ------------------------ #
 	def calculate_time_usage(self):
 		"""حساب الوقت:
 		- في حالة Service: إجمالي الساعات = الفرق بين start_time و end_time (بالساعات العشرية) يخزن في total_booked_hours.
@@ -719,88 +335,12 @@ def debug_deposit_calculation(booking: str):
 			self.deposit_percentage = 30
 
 	def calculate_package_totals(self):
-		"""حساب إجماليات الباقة باستخدام الأسعار المحسوبة مسبقاً"""
-		if self.booking_type != "Package":
-			return
-		
-		try:
-			# حساب الإجماليات من جدول خدمات الباقة
-			base_total = 0
-			final_total = 0
-			
-			if hasattr(self, 'package_services_table') and self.package_services_table:
-				for row in self.package_services_table:
-					# حساب السعر الأساسي
-					base_amount = flt(getattr(row, 'base_price', 0) or 0) * flt(getattr(row, 'quantity', 1) or 1)
-					base_total += base_amount
-					
-					# استخدام المبلغ المحسوب (الذي يتضمن خصم المصور إن وُجد)
-					final_total += flt(getattr(row, 'amount', 0) or 0)
-			else:
-				# إذا لم توجد خدمات، احسب من سعر الباقة مباشرة
-				if getattr(self, 'package', None):
-					try:
-						package_doc = frappe.get_doc("Package", self.package)
-						if package_doc.final_price:
-							base_total = flt(package_doc.final_price)
-							final_total = base_total
-					except Exception:
-						pass
-			
-			# تحديث الحقول
-			self.base_amount_package = base_total
-			self.total_amount_package = final_total
-			
-		except Exception as e:
-			frappe.log_error(f"Error calculating package totals: {str(e)}")
-		
-		# fallback افتراضي إن ظل فارغ
-		if getattr(self, 'deposit_percentage', None) in (None, ""):
-			self.deposit_percentage = 30
+		"""Delegate package total computation to shared helper."""
+		calculate_package_totals_logic(self)
+
 	def calculate_service_totals(self):
-		"""Calculate totals for service booking items based on photographer discount"""
-		if self.booking_type == "Service" and hasattr(self, 'selected_services_table'):
-			# اجلب خصم المصور فقط إن كان B2B
-			photographer_discount_pct = 0
-			allowed_services = set()
-			if getattr(self, 'photographer_b2b', False) and getattr(self, 'photographer', None):
-				try:
-					photographer_discount_pct = float(frappe.db.get_value("Photographer", self.photographer, "discount_percentage") or 0)
-					# اجلب الخدمات المربوطة بالمصور (Photographer Service)
-					photographer_services = frappe.get_all("Photographer Service", filters={"parent": self.photographer, "is_active": 1}, fields=["service"])
-					allowed_services = {ps.service for ps in photographer_services}
-				except Exception:
-					photographer_discount_pct = 0
-			else:
-				photographer_discount_pct = 0
-			# اجمالي قبل الخصم
-			base_total = 0
-			# اجمالي بعد الخصم
-			total_booking_amount = 0
-			for service_item in self.selected_services_table:
-				if not getattr(service_item, 'service', None):
-					continue
-				try:
-					base_price = float(frappe.db.get_value("Service", service_item.service, "price") or 0)
-				except Exception:
-					base_price = 0
-				service_item.pre_discount_price = base_price
-				service_item.service_price = base_price
-				discounted_price = base_price
-				# طبق الخصم فقط إذا كانت الخدمة ضمن خدمات المصور
-				if photographer_discount_pct > 0 and service_item.service in allowed_services:
-					discounted_price = base_price * (1 - photographer_discount_pct / 100.0)
-				service_item.discounted_price = discounted_price
-				quantity = float(getattr(service_item, 'quantity', 1) or 1)
-				# اجمالي قبل الخصم
-				base_total += quantity * base_price
-				if discounted_price > 0 and discounted_price != base_price:
-					service_item.total_amount = quantity * discounted_price
-				else:
-					service_item.total_amount = quantity * base_price
-				total_booking_amount += service_item.total_amount
-			self.base_amount = base_total
-			self.total_amount = total_booking_amount
+		"""Delegate service total computation to shared helper."""
+		calculate_service_totals_logic(self)
 
 	def recalculate_service_pricing(self):
 		"""Recalculate service pricing when photographer or B2B status changes"""
@@ -887,156 +427,68 @@ def debug_deposit_calculation(booking: str):
 		# Deposit removed here; handled centrally in _compute_deposit
 
 	# ------------------------ Validation Helpers ------------------------ #
-	def validate_dates(self):
-		from frappe.utils import getdate, nowdate
-		today = getdate(nowdate())
-		# Service (single date) logic stays strict
-		if self.booking_type == 'Service' and getattr(self, 'booking_date', None):
-			if getdate(self.booking_date) < today:
-				frappe.throw("لا يمكن إنشاء حجز في تاريخ سابق")
-		# Package: evaluate child dates if present
-		if self.booking_type == 'Package':
-			future_exists = False
-			past_rows = []
-			for row in (getattr(self, 'package_booking_dates', None) or []):
-				if getattr(row, 'booking_date', None):
-					row_date = getdate(row.booking_date)
-					if row_date >= today:
-						future_exists = True
-					else:
-						past_rows.append(row.booking_date)
-			# If no future dates at all -> block
-			if (getattr(self, 'package_booking_dates', None) and not future_exists):
-				frappe.throw("لا يمكن إنشاء حجز كل تواريخه في الماضي")
-			# If mixture -> warn (non blocking)
-			if past_rows and future_exists:
-				frappe.msgprint(
-					"تحذير: بعض التواريخ في الماضي ولن يتم اعتبارها: " + ", ".join(past_rows),
-					indicator='orange'
-				)
-
-	def validate_availability(self):
-		if hasattr(self, 'start_time') and hasattr(self, 'end_time') and getattr(self, 'booking_date', None) and getattr(self, 'photographer', None):
-			# Check for overlapping bookings
-			existing_bookings = frappe.get_all(
-				"Booking",
-				filters=[
-					["booking_date", "=", self.booking_date],
-					["photographer", "=", self.photographer],
-					["status", "not in", ["Cancelled"]],
-					["name", "!=", self.name or "new"],
-					# Check for time overlap: existing start_time < our end_time AND existing end_time > our start_time
-					["start_time", "<", self.end_time],
-					["end_time", ">", self.start_time]
-				]
-			)
-			if existing_bookings:
-				frappe.throw("هذا الوقت محجوز بالفعل. الرجاء اختيار وقت آخر.")
-
-	def calculate_booking_datetime(self):
-		if getattr(self, 'booking_date', None) and hasattr(self, 'booking_time') and getattr(self, 'booking_time', None):
-			booking_datetime = f"{self.booking_date} {self.booking_time}:00"
-			self.booking_datetime = booking_datetime
-			if hasattr(self, 'duration') and getattr(self, 'duration', None):
-				end_datetime = frappe.utils.add_to_date(booking_datetime, minutes=self.duration)
-				self.booking_end_datetime = end_datetime
-
-	# ------------------------ Events ------------------------ #
-	def on_update(self):
-		if getattr(self, 'status', None) == "Confirmed" and not getattr(self, 'confirmation_sent', False):
-			self.send_confirmation()
-			self.confirmation_sent = 1
-
-	# ------------------------ Communications ------------------------ #
-	def send_confirmation(self):
-		if hasattr(self, 'client') and getattr(self, 'client', None):
-			client_email = frappe.db.get_value("Client", self.client, "email_id")
-			if client_email:
-				frappe.sendmail(
-					recipients=[client_email],
-					subject="تأكيد الحجز - {0}".format(self.name),
-					message="""<p>مرحباً،</p>
-					<p>تم تأكيد حجزك رقم {0} في تاريخ {1} الساعة {2}.</p>
-					<p>نشكرك على اختيار Re Studio.</p>
-					""".format(self.name, self.booking_date, getattr(self, 'start_time', ''))
-				)
-
-	# ------------------------ Package Services ------------------------ #
-	def populate_package_services(self):
-		"""Populate package services table when package is selected with photographer discount"""
-		if self.booking_type == "Package" and getattr(self, 'package', None):
-			self.package_services_table = []
-			# Get package document and its services
-			package_doc = frappe.get_doc("Package", self.package)
-			package_services = package_doc.package_services or []
-			base_sum = 0.0
-			discounted_sum = 0.0
-			
-			# تحديد ما إذا كان هناك خصم للمصور
-			photographer_discount = 0
-			photographer_services = {}  # تخزين بيانات الخدمات من جدول المصور
-			
-			if getattr(self, 'photographer', None) and getattr(self, 'photographer_b2b', False):
-				try:
-					photographer_doc = frappe.get_doc('Photographer', self.photographer)
-					photographer_discount = flt(photographer_doc.discount_percentage or 0)
-					# جلب الخدمات مع السعر المخصوم من جدول خدمات المصور
-					for ps in photographer_doc.get('services', []):
-						photographer_services[ps.service] = {
-							'discounted_price': flt(ps.get('discounted_price') or 0),
-							'base_price': flt(ps.get('base_price') or 0),
-							'allow_discount': ps.get('allow_discount', 0)
-						}
-				except Exception as e:
-					frappe.log_error(f"Error fetching photographer discount: {str(e)}")
-			
-			for service in package_services:
-				qty = float(service.quantity or 1)
-				# Get base price from Service table
-				base_price = 0
-				try:
-					base_price = flt(frappe.db.get_value("Service", service.service, "price") or 0)
-				except Exception:
-					base_price = 0
-				
-				# Use package price as default, or base price if package price is 0
-				package_price = flt(getattr(service, 'package_price', 0) or 0)
-				hourly_rate = package_price if package_price > 0 else base_price
-				
-				# تطبيق خصم المصور - الأولوية للسعر المخصوم من جدول المصور
-				photographer_discounted_rate = hourly_rate
-				
-				if service.service in photographer_services:
-					# الأولوية الأولى: استخدام السعر المخصوم (discounted_price) من جدول المصور
-					if photographer_services[service.service]['discounted_price'] > 0:
-						photographer_discounted_rate = photographer_services[service.service]['discounted_price']
-					# الأولوية الثانية: استخدام نسبة الخصم العامة إذا كانت الخدمة مسموح بخصمها
-					elif photographer_discount > 0 and photographer_services[service.service]['allow_discount']:
-						photographer_discounted_rate = hourly_rate * (1 - photographer_discount / 100)
-				
-				# حساب المبلغ الإجمالي = الكمية × سعر الساعة (بعد الخصم إن وُجد)
-				amt = qty * photographer_discounted_rate
-				
-				# Get is_required field from Package Service Item
-				is_mandatory = getattr(service, 'is_required', 0) or 0
-				
-				self.append("package_services_table", {
-					"service": service.service,
-					"service_name": getattr(service, 'service_name', '') or service.service,
-					"quantity": qty,
-					"base_price": base_price,
-					"package_price": hourly_rate,  # سعر الساعة داخل الباقة (before photographer discount)
-					"photographer_discount_amount": photographer_discounted_rate,  # السعر بعد خصم المصور (per hour)
-					"amount": amt,  # المبلغ الإجمالي
-					"أجباري": is_mandatory  # Set mandatory field from Package Service Item
-				})
-				base_sum += qty * base_price
-				discounted_sum += amt
-			
-			# تخزين الإجماليات في الحقلين الموحدين
-			self.base_amount_package = round(base_sum, 2)
-			self.total_amount_package = round(discounted_sum, 2)
 			# تحديث العربون بناءً على هذه القيم لاحقاً في calculate_booking_total
+
+@frappe.whitelist()
+def recalc_booking_deposit(booking: str):
+	"""Recompute pricing, totals, and deposit for an existing booking."""
+	if not booking:
+		frappe.throw(_('Booking required'))
+
+	# احسب القيم وأعدها للواجهة بدون حفظ المستند لتجنب تعارض "modified"
+	doc = frappe.get_doc('Booking', booking)
+	recompute_pricing(doc)
+	calculate_booking_total(doc)
+	calculate_deposit_amount(doc)
+	return {
+		'booking': booking,
+		'deposit_amount': doc.deposit_amount,
+		'payment_status': getattr(doc, 'payment_status', None)
+	}
+
+@frappe.whitelist()
+def debug_deposit_calculation(booking: str):
+	"""Return a step-by-step breakdown of deposit calculation for debugging."""
+	if not booking:
+		frappe.throw(_('Booking required'))
+
+	doc = frappe.get_doc('Booking', booking)
+
+	settings = frappe.db.get_singles_dict('General Settings') if frappe.db.exists('DocType', 'General Settings') else {}
+	deposit_pct = None
+	for key in ('نسبة العربون (%)', 'deposit_percentage', 'نسبة_العربون_%'):
+		if key in settings and settings.get(key) is not None:
+			deposit_pct = float(settings.get(key))
+			break
+	if deposit_pct is None:
+		deposit_pct = 30.0
+
+	if doc.booking_type == 'Service':
+		basis_amount = float(getattr(doc, 'total_amount', 0) or 0)
+		basis_field = 'total_amount'
+	else:
+		basis_amount = float(getattr(doc, 'total_amount_package', 0) or 0)
+		basis_field = 'total_amount_package'
+
+	step1 = basis_amount * deposit_pct
+	step2 = step1 / 100.0
+	final_deposit = round(step2, 2)
+
+	return {
+		'booking': booking,
+		'booking_type': doc.booking_type,
+		'basis_field': basis_field,
+		'basis_amount': basis_amount,
+		'deposit_percentage': deposit_pct,
+		'calculation_steps': {
+			'step1_multiply': f"{basis_amount} × {deposit_pct} = {step1}",
+			'step2_divide': f"{step1} ÷ 100 = {step2}",
+			'step3_round': f"round({step2}, 2) = {final_deposit}"
+		},
+		'calculated_deposit': final_deposit,
+		'current_deposit_amount': float(getattr(doc, 'deposit_amount', 0) or 0),
+		'matches': final_deposit == float(getattr(doc, 'deposit_amount', 0) or 0)
+	}
 
 @frappe.whitelist()
 def recalculate_booking_totals(booking_name):
@@ -1045,9 +497,9 @@ def recalculate_booking_totals(booking_name):
 	if not booking_name or booking_name.startswith("new-"):
 		return {"error": "unsaved", "message": _("يجب حفظ الحجز أولاً قبل إعادة الحساب")}
 	booking = frappe.get_doc("Booking", booking_name)
+	# احسب القيم على كائن الذاكرة فقط وأعدها للواجهة بدون حفظ
 	booking.recalculate_service_pricing()
 	booking.calculate_booking_total()
-	booking.save()
 	return {
 		"total_amount": booking.total_amount,
 		"deposit_amount": getattr(booking, 'deposit_amount', 0),
@@ -2098,3 +1550,93 @@ def get_package_services_with_photographer(package_name, photographer=None, phot
 		frappe.log_error(error_msg, "Get Package Services With Photographer")
 		frappe.throw(_(error_msg))
 
+
+# ------------------------ Calendar View Methods ------------------------ #
+
+@frappe.whitelist()
+def get_events(start, end, filters=None):
+	"""Get events for Calendar view - shows both Service and Package bookings"""
+	from frappe.desk.calendar import get_event_conditions
+	
+	conditions = get_event_conditions("Booking", filters)
+	
+	# Get Service bookings
+	service_events = frappe.db.sql(f"""
+		SELECT 
+			name,
+			client_name as title,
+			booking_date as start,
+			booking_date as end,
+			status,
+			booking_type,
+			service_name,
+			start_time,
+			end_time
+		FROM `tabBooking`
+		WHERE booking_date IS NOT NULL
+		AND booking_type = 'Service'
+		AND (booking_date BETWEEN %(start)s AND %(end)s)
+		{conditions}
+	""", {
+		"start": start,
+		"end": end
+	}, as_dict=True)
+	
+	# Get Package bookings from Package Booking Date child table
+	package_events = frappe.db.sql(f"""
+		SELECT 
+			b.name,
+			b.client_name as title,
+			pbd.booking_date as start,
+			pbd.booking_date as end,
+			b.status,
+			'Package' as booking_type,
+			b.package_name as service_name,
+			pbd.start_time,
+			pbd.end_time,
+			pbd.name as child_name
+		FROM `tabBooking` b
+		INNER JOIN `tabPackage Booking Date` pbd ON pbd.parent = b.name
+		WHERE pbd.booking_date IS NOT NULL
+		AND b.booking_type = 'Package'
+		AND (pbd.booking_date BETWEEN %(start)s AND %(end)s)
+		{conditions.replace('`tabBooking`', 'b') if conditions else ''}
+	""", {
+		"start": start,
+		"end": end
+	}, as_dict=True)
+	
+	# Combine both lists
+	all_events = service_events + package_events
+	
+	# Format events for calendar
+	for event in all_events:
+		# Set color based on status
+		if event.status == "Confirmed":
+			event.color = "#4CAF50"  # Green
+		elif event.status == "Completed":
+			event.color = "#2196F3"  # Blue
+		elif event.status == "Cancelled":
+			event.color = "#F44336"  # Red
+		else:
+			event.color = "#9E9E9E"  # Grey
+		
+		# Build proper datetime if times exist
+		if event.start_time:
+			event.start = f"{event.start} {event.start_time}"
+			event.allDay = 0
+		else:
+			event.allDay = 1
+			
+		if event.end_time:
+			event.end = f"{event.end} {event.end_time}"
+		
+		# Add service/package name to title with emoji indicator
+		if event.service_name:
+			badge = "📦" if event.booking_type == "Package" else "🎯"
+			event.title = f"{badge} {event.title} - {event.service_name}"
+		else:
+			badge = "📦" if event.booking_type == "Package" else "🎯"
+			event.title = f"{badge} {event.title}"
+	
+	return all_events

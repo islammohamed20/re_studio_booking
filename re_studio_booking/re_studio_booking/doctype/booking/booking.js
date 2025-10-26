@@ -19,19 +19,25 @@ frappe.ui.form.on('Booking', {
 		// Filter services and packages based on booking type
 		setup_filters(frm);
 		
-		// حساب الساعات إذا كانت موجودة
-		if (frm.doc.booking_type === 'Service' && frm.doc.start_time && frm.doc.end_time) {
-			calculate_service_hours(frm);
-		}
-		
-		// حساب المجاميع إذا كانت موجودة
-		if (frm.doc.booking_type === 'Service' && frm.doc.selected_services_table) {
-			calculate_service_totals(frm);
-		}
-		
-		// إعادة حساب ساعات الباقة عند فتح النموذج لضمان تحديث القيم
-		if (frm.doc.booking_type === 'Package') {
-			calculate_total_used_hours(frm);
+		// ملاحظة مهمة:
+		// لتجنب ظهور "Not Saved" فور فتح مستند محفوظ، لا نقوم بتعديل الحقول
+		// في حدث refresh للمستندات غير الجديدة. سنكتفي بالحسابات أثناء التعديل الفعلي فقط.
+
+		const is_new_or_unsaved = frm.is_new() || frm.doc.__unsaved;
+
+		// حساب الساعات والمجاميع فقط إذا كان المستند جديداً أو غير محفوظ
+		if (is_new_or_unsaved) {
+			if (frm.doc.booking_type === 'Service' && frm.doc.start_time && frm.doc.end_time) {
+				calculate_service_hours(frm);
+			}
+
+			if (frm.doc.booking_type === 'Service' && frm.doc.selected_services_table) {
+				calculate_service_totals(frm);
+			}
+
+			if (frm.doc.booking_type === 'Package') {
+				calculate_total_used_hours(frm);
+			}
 		}
 	},
 	
@@ -680,20 +686,9 @@ function update_deposit_ui(frm) {
 		return;
 	}
 	
-	// إن كان المستند محفوظاً، اعتمد على السيرفر لتطبيق جميع القواعد
+	// إن كان المستند محفوظاً بالفعل، لا نقوم بتعديل الحقول هنا حتى لا يظهر "Not Saved"
+	// سيتم احتساب العربون وحفظه ضمن تدفق validate/save في السيرفر.
 	if (frm.doc.name && !frm.doc.__islocal) {
-		frappe.call({
-			method: 're_studio_booking.re_studio_booking.doctype.booking.booking.recalc_booking_deposit',
-			args: { booking: frm.doc.name },
-			callback: function(r) {
-				if (r.message) {
-					frm.set_value('deposit_amount', r.message.deposit_amount || 0);
-					if (r.message.payment_status) {
-						frm.set_value('payment_status', r.message.payment_status);
-					}
-				}
-			}
-		});
 		return;
 	}
 	

@@ -3,14 +3,14 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import flt, getdate, add_days
+from frappe.utils import flt, getdate, add_days, today
 
 class BookingInvoice(Document):
 	def validate(self):
 		self.calculate_amounts()
 		self.set_due_date()
 		self.update_payments_aggregation()
-		self.update_payment_status()
+		self.update_invoice_status()
 		
 	def calculate_amounts(self):
 		"""Compute total_amount from existing value or derive from child rows.
@@ -47,27 +47,6 @@ class BookingInvoice(Document):
 		if not self.due_date and self.invoice_date:
 			# Default due date: 30 days from invoice date
 			self.due_date = add_days(getdate(self.invoice_date), 30)
-			
-	def update_payment_status(self):
-		"""Update payment status derived from aggregated child payments"""
-		total_amount = flt(self.total_amount)
-		paid_amount = flt(self.paid_amount)
-		if total_amount <= 0:
-			self.payment_status = "Unpaid"
-			return
-		if paid_amount <= 0:
-			self.payment_status = "Unpaid"
-		elif paid_amount >= total_amount:
-			self.payment_status = "Paid" if paid_amount == total_amount else "Overpaid"
-		else:
-			self.payment_status = "Partially Paid"
-		# Invoice status mirror
-		if self.payment_status == "Paid":
-			self.status = "Paid"
-		elif self.payment_status == "Partially Paid":
-			self.status = "Partially Paid"
-		elif self.status not in ["Draft", "Cancelled"] and self.due_date and getdate() > getdate(self.due_date):
-			self.status = "Overdue"
 
 	def update_payments_aggregation(self):
 		"""Aggregate child payment_table rows to update paid_amount & outstanding_amount"""
@@ -78,6 +57,64 @@ class BookingInvoice(Document):
 				total_payments += amt
 		self.paid_amount = total_payments
 		self.outstanding_amount = flt(self.total_amount) - total_payments if flt(self.total_amount) else 0
+	
+	def update_invoice_status(self):
+		"""تحديث حالة الفاتورة بناءً على حالة الدفع وآخر تاريخ دفع"""
+		from frappe.utils import getdate, nowdate
+		
+		total_amount = flt(self.total_amount)
+		paid_amount = flt(self.paid_amount)
+		
+		# لا نغير الحالة إذا كانت Cancelled أو Draft (للفواتير الجديدة)
+		if self.status == "Cancelled":
+			return
+		
+		# السماح بتحديث Draft إلى حالة أخرى فقط إذا كان هناك دفعات
+		if self.status == "Draft" and paid_amount <= 0:
+			return
+		
+		# إذا لم يوجد مبلغ إجمالي
+		if total_amount <= 0:
+			return
+		
+		# إذا تم الدفع بالكامل
+		if paid_amount >= total_amount:
+			self.status = "Paid"
+			return
+		
+		# إذا تم دفع جزء من المبلغ
+		if paid_amount > 0 and paid_amount < total_amount:
+			# التحقق من آخر تاريخ دفع
+			last_payment_date = self._get_last_payment_date()
+			
+			if last_payment_date:
+				today = getdate(nowdate())
+				days_since_last_payment = (today - getdate(last_payment_date)).days
+				
+				# إذا مر أكثر من يوم على آخر دفعة
+				if days_since_last_payment > 1:
+					self.status = "Overdue"
+				else:
+					self.status = "Partially Paid"
+			else:
+				self.status = "Partially Paid"
+			return
+		
+		# إذا لم يتم الدفع أبداً
+		# التحقق من تاريخ الاستحقاق
+		if self.due_date and getdate(nowdate()) > getdate(self.due_date):
+			self.status = "Overdue"
+	
+	def _get_last_payment_date(self):
+		"""الحصول على آخر تاريخ دفع من جدول المدفوعات"""
+		payment_dates = []
+		for row in (getattr(self, 'payment_table', []) or []):
+			if getattr(row, 'date', None) and flt(getattr(row, 'paid_amount', 0)) > 0:
+				payment_dates.append(row.date)
+		
+		if payment_dates:
+			return max(payment_dates)
+		return None
 			
 	def before_submit(self):
 		"""Validate before submission"""
@@ -93,16 +130,16 @@ class BookingInvoice(Document):
 			booking_doc = frappe.get_doc("Booking", self.booking)
 			booking_doc.invoice = self.name
 			booking_doc.save()
-			
+		
 		# Set client info from booking if not provided
 		if self.booking and not self.client:
 			booking_doc = frappe.get_doc("Booking", self.booking)
 			self.client = getattr(booking_doc, 'client', None)
 			if self.client:
 				client_doc = frappe.get_doc("Client", self.client)
-				self.customer_name = client_doc.client_name
+				self.client_name = client_doc.client_name
 				self.customer_email = client_doc.email_id
-				self.customer_phone = client_doc.mobile_no
+				self.phone = client_doc.mobile_no
 			
 	def on_cancel(self):
 		"""Actions on cancellation"""
@@ -166,12 +203,12 @@ def recalc_invoice_payments(invoice: str):
     """Reaggregate payments for an invoice (utility)"""
     doc = frappe.get_doc('Booking Invoice', invoice)
     doc.update_payments_aggregation()
-    doc.update_payment_status()
+    doc.update_invoice_status()
     doc.save()
     return {
         'paid_amount': doc.paid_amount,
         'outstanding_amount': doc.outstanding_amount,
-        'payment_status': doc.payment_status
+        'status': doc.status
     }
 
 @frappe.whitelist()
@@ -229,10 +266,22 @@ def get_booking_child_rows(booking: str):
 				"amount": getattr(row, 'amount', None),
 				"photographer_discount_amount": getattr(row, 'photographer_discount_amount', None)
 			})
+	
+	# جلب تواريخ الحجز للباقات
+	package_dates = []
+	if getattr(booking_doc, 'booking_type', None) == 'Package' and hasattr(booking_doc, 'package_booking_dates'):
+		for row in (booking_doc.package_booking_dates or []):
+			package_dates.append({
+				"booking_date": getattr(row, 'booking_date', None),
+				"start_time": getattr(row, 'start_time', None),
+				"end_time": getattr(row, 'end_time', None),
+				"hours": getattr(row, 'hours', None)
+			})
 
 	return {
 		"services": services,
-		"package_services": package_services
+		"package_services": package_services,
+		"package_dates": package_dates
 	}
 
 @frappe.whitelist()
@@ -252,26 +301,44 @@ def create_invoice_from_booking(booking):
 	else:
 		initial_total = flt(getattr(booking_doc, 'total_amount_package', 0) or getattr(booking_doc, 'total_amount', 0) or 0)
 
+	# Get deposit amount from booking to initialize paid_amount
+	deposit_amount = flt(getattr(booking_doc, 'deposit_amount', 0) or 0)
+	outstanding = initial_total - deposit_amount if initial_total > 0 else 0
+
 	# Create invoice record (no base_amount field in current model)
 	invoice_doc = frappe.get_doc({
 		"doctype": "Booking Invoice",
 		"client": getattr(booking_doc, 'client', None),
-		"customer_name": booking_doc.customer_name,
-		"customer_email": booking_doc.customer_email,
-		"customer_phone": booking_doc.customer_phone,
+		"client_name": getattr(booking_doc, 'client_name', None),
+		"customer_email": getattr(booking_doc, 'client_email', None),  # Booking uses client_email
+		"phone": getattr(booking_doc, 'phone', None),
+		"mobile_no": getattr(booking_doc, 'mobile_no', None),
 		"booking": booking_doc.name,
-		"booking_type": booking_doc.booking_type,
-		"service": booking_doc.service,
-		"package": booking_doc.package,
-		"photographer": booking_doc.photographer,
-		"booking_date": booking_doc.booking_date,
-		"start_time": booking_doc.start_time,
-		"end_time": booking_doc.end_time,
+		"booking_type": getattr(booking_doc, 'booking_type', None),
+		"service": getattr(booking_doc, 'service', None),
+		"package": getattr(booking_doc, 'package', None),
+		"photographer": getattr(booking_doc, 'photographer', None),
+		"booking_date": getattr(booking_doc, 'booking_date', None),
+		"start_time": getattr(booking_doc, 'start_time', None),
+		"end_time": getattr(booking_doc, 'end_time', None),
 		"total_amount": initial_total,
+		"paid_amount": deposit_amount,
+		"outstanding_amount": outstanding,
 		"status": "Draft"
 	})
 	
 	invoice_doc.insert()
+	
+	# إضافة مبلغ العربون كأول دفعة في جدول المدفوعات إذا كان موجوداً
+	if deposit_amount > 0:
+		invoice_doc.append('payment_table', {
+			'paid_amount': deposit_amount,
+			'payment_method': getattr(booking_doc, 'payment_method', None) or 'Cash',
+			'date': getattr(booking_doc, 'booking_date', None) or today(),
+			'transaction_reference_number': f"عربون حجز {booking_doc.name}"
+		})
+		invoice_doc.save()
+	
 	return invoice_doc.name
 
 @frappe.whitelist()
@@ -290,20 +357,20 @@ def create_invoice_from_quotation(quotation):
 	# Create invoice (simplified fields only)
 	invoice_doc = frappe.get_doc({
 		"doctype": "Booking Invoice",
-		"customer": quotation_doc.customer,
-		"customer_name": quotation_doc.customer_name,
-		"customer_email": quotation_doc.customer_email,
-		"customer_phone": quotation_doc.customer_phone,
-		"booking": quotation_doc.booking,
+		"client": getattr(quotation_doc, 'client', None),
+		"client_name": getattr(quotation_doc, 'customer_name', None),
+		"customer_email": getattr(quotation_doc, 'customer_email', None),
+		"phone": getattr(quotation_doc, 'customer_phone', None),
+		"booking": getattr(quotation_doc, 'booking', None),
 		"quotation": quotation_doc.name,
-		"booking_type": quotation_doc.booking_type,
-		"service": quotation_doc.service,
-		"package": quotation_doc.package,
-		"photographer": quotation_doc.photographer,
-		"booking_date": quotation_doc.booking_date,
-		"start_time": quotation_doc.start_time,
-		"end_time": quotation_doc.end_time,
-		"total_amount": quotation_doc.base_amount,
+		"booking_type": getattr(quotation_doc, 'booking_type', None),
+		"service": getattr(quotation_doc, 'service', None),
+		"package": getattr(quotation_doc, 'package', None),
+		"photographer": getattr(quotation_doc, 'photographer', None),
+		"booking_date": getattr(quotation_doc, 'booking_date', None),
+		"start_time": getattr(quotation_doc, 'start_time', None),
+		"end_time": getattr(quotation_doc, 'end_time', None),
+		"total_amount": getattr(quotation_doc, 'base_amount', 0),
 		"status": "Draft"
 	})
 	

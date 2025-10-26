@@ -127,6 +127,13 @@ def _get_arabic_day_name(day_name):
 def validate_availability(booking_doc):
 	"""
 	التحقق من توفر الوقت (عدم وجود حجوزات متداخلة)
+	يتحقق من عدم وجود تعارض في:
+	1. نفس التاريخ والوقت مع نفس المصور
+	2. نفس التاريخ والوقت لنفس الاستديو (بغض النظر عن المصور)
+	
+	يدعم:
+	- Service: يتحقق من booking_date + start_time + end_time
+	- Package: يتحقق من كل صف في package_booking_dates
 	
 	Args:
 		booking_doc: مستند الحجز
@@ -134,28 +141,172 @@ def validate_availability(booking_doc):
 	Raises:
 		frappe.ValidationError: إذا كان الوقت محجوزاً
 	"""
-	if not (hasattr(booking_doc, 'start_time') and 
+	# تحديد التواريخ والأوقات حسب نوع الحجز
+	dates_to_check = []
+	
+	if booking_doc.booking_type == 'Service':
+		# Service: تاريخ واحد
+		if (hasattr(booking_doc, 'start_time') and 
 			hasattr(booking_doc, 'end_time') and 
-			getattr(booking_doc, 'booking_date', None) and 
-			getattr(booking_doc, 'photographer', None)):
+			getattr(booking_doc, 'booking_date', None)):
+			dates_to_check.append({
+				'date': booking_doc.booking_date,
+				'start': booking_doc.start_time,
+				'end': booking_doc.end_time
+			})
+	
+	elif booking_doc.booking_type == 'Package':
+		# Package: تواريخ متعددة من الجدول
+		package_dates = getattr(booking_doc, 'package_booking_dates', [])
+		for row in package_dates:
+			if (getattr(row, 'booking_date', None) and 
+				getattr(row, 'start_time', None) and 
+				getattr(row, 'end_time', None)):
+				dates_to_check.append({
+					'date': row.booking_date,
+					'start': row.start_time,
+					'end': row.end_time
+				})
+	
+	# إذا لم يكن هناك تواريخ للتحقق منها
+	if not dates_to_check:
 		return
 	
-	# البحث عن حجوزات متداخلة
-	existing_bookings = frappe.get_all(
+	# التحقق من كل تاريخ
+	for date_slot in dates_to_check:
+		_check_single_date_availability(
+			booking_doc, 
+			date_slot['date'], 
+			date_slot['start'], 
+			date_slot['end']
+		)
+
+
+def _check_single_date_availability(booking_doc, check_date, check_start, check_end):
+	"""
+	التحقق من توفر تاريخ ووقت محدد
+	
+	Args:
+		booking_doc: مستند الحجز
+		check_date: التاريخ المراد التحقق منه
+		check_start: وقت البداية
+		check_end: وقت النهاية
+	"""
+	# التحقق الأول: تعارض مع نفس المصور (إذا تم تحديد مصور)
+	if getattr(booking_doc, 'photographer', None):
+		existing_photographer_bookings = frappe.get_all(
+			"Booking",
+			filters=[
+				["booking_type", "=", "Service"],  # Service bookings
+				["booking_date", "=", check_date],
+				["photographer", "=", booking_doc.photographer],
+				["status", "not in", ["Cancelled"]],
+				["name", "!=", booking_doc.name or "new"],
+				["start_time", "<", check_end],
+				["end_time", ">", check_start]
+			]
+		)
+		
+		if existing_photographer_bookings:
+			frappe.throw(_(
+				f"⚠️ المصور محجوز في هذا الوقت!<br><br>"
+				f"<b>التاريخ:</b> {check_date}<br>"
+				f"<b>الوقت:</b> {check_start} - {check_end}<br><br>"
+				f"الرجاء اختيار مصور آخر أو وقت آخر."
+			))
+		
+		# تحقق من Package bookings للمصور
+		photographer_package_bookings = frappe.get_all(
+			"Package Booking Date",
+			filters=[
+				["booking_date", "=", check_date],
+				["start_time", "<", check_end],
+				["end_time", ">", check_start]
+			],
+			fields=["parent", "booking_date", "start_time", "end_time"]
+		)
+		
+		for pkg_date in photographer_package_bookings:
+			# تحقق من أن الحجز ليس ملغي وله نفس المصور
+			booking = frappe.db.get_value(
+				"Booking",
+				pkg_date.parent,
+				["photographer", "status", "name"],
+				as_dict=True
+			)
+			if (booking and 
+				booking.photographer == booking_doc.photographer and 
+				booking.status != "Cancelled" and
+				booking.name != (booking_doc.name or "new")):
+				frappe.throw(_(
+					f"⚠️ المصور محجوز في هذا الوقت!<br><br>"
+					f"<b>التاريخ:</b> {check_date}<br>"
+					f"<b>الوقت:</b> {check_start} - {check_end}<br><br>"
+					f"الرجاء اختيار مصور آخر أو وقت آخر."
+				))
+	
+	# التحقق الثاني: تعارض في الاستديو
+	# 1. تحقق من Service bookings
+	existing_studio_bookings = frappe.get_all(
 		"Booking",
 		filters=[
-			["booking_date", "=", booking_doc.booking_date],
-			["photographer", "=", booking_doc.photographer],
+			["booking_type", "=", "Service"],
+			["booking_date", "=", check_date],
 			["status", "not in", ["Cancelled"]],
 			["name", "!=", booking_doc.name or "new"],
-			# Check for time overlap
-			["start_time", "<", booking_doc.end_time],
-			["end_time", ">", booking_doc.start_time]
-		]
+			["start_time", "<", check_end],
+			["end_time", ">", check_start]
+		],
+		fields=["name", "client_name", "booking_date", "start_time", "end_time"]
 	)
 	
-	if existing_bookings:
-		frappe.throw(_("هذا الوقت محجوز بالفعل. الرجاء اختيار وقت آخر."))
+	if existing_studio_bookings:
+		conflict = existing_studio_bookings[0]
+		frappe.throw(_(
+			f"⚠️ الاستديو محجوز في هذا الوقت!<br><br>"
+			f"<b>الحجز المتعارض:</b> {conflict.get('name')}<br>"
+			f"<b>العميل:</b> {conflict.get('client_name', 'غير محدد')}<br>"
+			f"<b>التاريخ:</b> {conflict.get('booking_date')}<br>"
+			f"<b>الوقت:</b> {conflict.get('start_time')} - {conflict.get('end_time')}<br><br>"
+			f"<b>الحجز الجديد:</b><br>"
+			f"<b>التاريخ:</b> {check_date}<br>"
+			f"<b>الوقت:</b> {check_start} - {check_end}<br><br>"
+			f"الرجاء اختيار وقت آخر."
+		), title=_("خطأ - الاستديو محجوز"))
+	
+	# 2. تحقق من Package bookings
+	package_bookings = frappe.get_all(
+		"Package Booking Date",
+		filters=[
+			["booking_date", "=", check_date],
+			["start_time", "<", check_end],
+			["end_time", ">", check_start]
+		],
+		fields=["parent", "booking_date", "start_time", "end_time"]
+	)
+	
+	for pkg_date in package_bookings:
+		# تحقق من أن الحجز ليس ملغي وليس نفس الحجز
+		booking_status = frappe.db.get_value(
+			"Booking",
+			pkg_date.parent,
+			["status", "client_name"],
+			as_dict=True
+		)
+		if (booking_status and 
+			booking_status.status != "Cancelled" and
+			pkg_date.parent != (booking_doc.name or "new")):
+			frappe.throw(_(
+				f"⚠️ الاستديو محجوز في هذا الوقت!<br><br>"
+				f"<b>الحجز المتعارض:</b> {pkg_date.parent}<br>"
+				f"<b>العميل:</b> {booking_status.get('client_name', 'غير محدد')}<br>"
+				f"<b>التاريخ:</b> {pkg_date.booking_date}<br>"
+				f"<b>الوقت:</b> {pkg_date.start_time} - {pkg_date.end_time}<br><br>"
+				f"<b>الحجز الجديد:</b><br>"
+				f"<b>التاريخ:</b> {check_date}<br>"
+				f"<b>الوقت:</b> {check_start} - {check_end}<br><br>"
+				f"الرجاء اختيار وقت آخر."
+			), title=_("خطأ - الاستديو محجوز"))
 
 
 # ============ Hours Validation ============
