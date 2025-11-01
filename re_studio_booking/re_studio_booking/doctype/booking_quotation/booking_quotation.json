@@ -1,14 +1,15 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:QUOT-{####}",
- "creation": "2025-01-01 10:00:00.000000",
+ "autoname": "format:BOOK-QUOT-{####}",
+ "creation": "2025-01-01 10:00:00",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "customer_section",
-  "customer",
-  "customer_name",
+  "quotation_to",
+  "client",
+  "lead",
   "customer_email",
   "customer_phone",
   "column_break_5",
@@ -44,17 +45,29 @@
    "label": "\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0639\u0645\u064a\u0644"
   },
   {
-   "fieldname": "client",
-   "fieldtype": "Link",
-   "label": "\u0627\u0644\u0639\u0645\u064a\u0644",
-   "options": "Client",
+   "default": "Client",
+   "fieldname": "quotation_to",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "\u0639\u0631\u0636 \u0627\u0644\u0633\u0639\u0631 \u0644\u0640",
+   "options": "Client\nLead",
    "reqd": 1
   },
   {
-   "fieldname": "customer_name",
-   "fieldtype": "Data",
-   "label": "\u0627\u0633\u0645 \u0627\u0644\u0639\u0645\u064a\u0644",
-   "reqd": 1
+   "depends_on": "eval:doc.quotation_to=='Client'",
+   "fieldname": "client",
+   "fieldtype": "Link",
+   "label": "\u0627\u0644\u0639\u0645\u064a\u0644",
+   "mandatory_depends_on": "eval:doc.quotation_to=='Client'",
+   "options": "Client"
+  },
+  {
+   "depends_on": "eval:doc.quotation_to=='Lead'",
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "label": "\u0639\u0645\u064a\u0644 \u0645\u062d\u062a\u0645\u0644",
+   "mandatory_depends_on": "eval:doc.quotation_to=='Lead'",
+   "options": "Lead"
   },
   {
    "fieldname": "customer_email",
@@ -74,6 +87,7 @@
    "default": "Today",
    "fieldname": "quotation_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0639\u0631\u0636",
    "reqd": 1
   },
@@ -118,7 +132,7 @@
    "fieldname": "package",
    "fieldtype": "Link",
    "label": "\u0627\u0644\u0628\u0627\u0642\u0629",
-   "options": "Service Package"
+   "options": "Package"
   },
   {
    "fieldname": "photographer",
@@ -153,6 +167,7 @@
   {
    "fieldname": "base_amount",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "\u0627\u0644\u0645\u0628\u0644\u063a \u0627\u0644\u0623\u0633\u0627\u0633\u064a",
    "options": "SAR",
    "reqd": 1
@@ -208,7 +223,8 @@
    "label": "\u0645\u0644\u0627\u062d\u0638\u0627\u062a"
   }
  ],
- "modified": "2025-01-01 10:00:00.000000",
+ "links": [],
+ "modified": "2025-11-01 20:03:13.589002",
  "modified_by": "Administrator",
  "module": "Re Studio Booking",
  "name": "Booking Quotation",
@@ -229,7 +245,6 @@
   },
   {
    "create": 1,
-   "delete": 0,
    "email": 1,
    "export": 1,
    "print": 1,
@@ -240,18 +255,14 @@
    "write": 1
   },
   {
-   "create": 0,
-   "delete": 0,
    "email": 1,
-   "export": 0,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Re Studio Agent",
-   "share": 0,
-   "write": 0
+   "role": "Re Studio Agent"
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

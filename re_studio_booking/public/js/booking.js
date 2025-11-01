@@ -518,4 +518,60 @@ function setup_field_dependencies(frm) {
             }
         };
     });
+
+    // Show only active clients, ignore user permissions server-side already
+    frm.set_query('client', function() {
+        return {
+            filters: {
+                'status': 'Active'
+            }
+        };
+    });
+}
+
+// Child table logic: toggle Booking Service Item fields by service unit type
+frappe.ui.form.on('Booking Service Item', {
+    form_render: function(frm, cdt, cdn) {
+        // When a row is opened, ensure unit fields are populated
+        update_service_unit_fields(frm, cdt, cdn);
+    },
+    service: function(frm, cdt, cdn) {
+        // When service changes, fetch unit type and duration unit and update hidden fields
+        update_service_unit_fields(frm, cdt, cdn);
+    }
+});
+
+function update_service_unit_fields(frm, cdt, cdn) {
+    const row = frappe.get_doc(cdt, cdn);
+    if (!row || !row.service) {
+        return;
+    }
+    frappe.db.get_value('Service', row.service, ['type_unit', 'duration_unit']).then(r => {
+        const sv = r && r.message ? r.message : {};
+        const unit_type = sv.type_unit || '';
+        const duration_unit = sv.duration_unit || '';
+        // Store in hidden helper fields on the row so depends_on can react
+        row.service_unit_type = unit_type;
+        row.service_duration_unit = duration_unit;
+
+        // Optional: clear irrelevant fields to avoid confusion
+        if (unit_type === 'مدة') {
+            if (duration_unit === 'ساعة') {
+                row.min_duration = 0;
+                row.mount = 0;
+                if (!row.quantity || row.quantity < 0) row.quantity = 1;
+            } else if (duration_unit === 'دقيقة') {
+                row.quantity = 0;
+                row.mount = 0;
+                if (!row.min_duration || row.min_duration < 0) row.min_duration = 1;
+            }
+        } else {
+            row.quantity = 0;
+            row.min_duration = 0;
+            if (!row.mount || row.mount < 0) row.mount = 1;
+        }
+
+        // Refresh the table so depends_on/make_required take effect visually
+        frm.refresh_field('selected_services_table');
+    });
 }

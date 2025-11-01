@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"CyTpBR56Hi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Re Studio Booking</span>\",\"col\":12}},{\"id\":\"f9WXCqoRTK\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Booking\",\"col\":3}},{\"id\":\"t0TgY0yg4W\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bookings\",\"col\":3}},{\"id\":\"Vlsbl_l-tA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Photographers\",\"col\":3}},{\"id\":\"DV8OAEap5b\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Services\",\"col\":3}},{\"id\":\"Pc05dmxvXt\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"hKvwEsgvLy\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Booking Management</span>\",\"col\":12}},{\"id\":\"KdimUTk1_L\",\"type\":\"card\",\"data\":{\"card_name\":\"Bookings\",\"col\":3}},{\"id\":\"grSu-NrnuO\",\"type\":\"card\",\"data\":{\"card_name\":\"Photographers\",\"col\":3}},{\"id\":\"ZZ6ZwVWGDU\",\"type\":\"card\",\"data\":{\"card_name\":\"Accounts\",\"col\":3}},{\"id\":\"0Jfc8eHifm\",\"type\":\"card\",\"data\":{\"card_name\":\"Setting\",\"col\":3}},{\"id\":\"RuW8Brd9-v\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports &amp; Analytics</span>\",\"col\":12}},{\"id\":\"iLYqtwY56D\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":6}}]",
+ "content": "[{\"id\":\"CyTpBR56Hi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Re Studio Booking</span>\",\"col\":12}},{\"id\":\"f9WXCqoRTK\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Booking\",\"col\":3}},{\"id\":\"t0TgY0yg4W\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bookings\",\"col\":3}},{\"id\":\"Vlsbl_l-tA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Photographers\",\"col\":3}},{\"id\":\"DV8OAEap5b\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Services\",\"col\":3}},{\"id\":\"Pc05dmxvXt\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"hKvwEsgvLy\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Booking Management</span>\",\"col\":12}},{\"id\":\"KdimUTk1_L\",\"type\":\"card\",\"data\":{\"card_name\":\"Bookings\",\"col\":3}},{\"id\":\"grSu-NrnuO\",\"type\":\"card\",\"data\":{\"card_name\":\"Photographers\",\"col\":3}},{\"id\":\"ZZ6ZwVWGDU\",\"type\":\"card\",\"data\":{\"card_name\":\"Accounts\",\"col\":3}},{\"id\":\"IoTU9_-SM6\",\"type\":\"card\",\"data\":{\"card_name\":\"Serviecs & Package\",\"col\":3}},{\"id\":\"zC-5aCfcvj\",\"type\":\"card\",\"data\":{\"card_name\":\"CRM\",\"col\":3}},{\"id\":\"0Jfc8eHifm\",\"type\":\"card\",\"data\":{\"card_name\":\"Setting\",\"col\":3}},{\"id\":\"RuW8Brd9-v\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports &amp; Analytics</span>\",\"col\":12}},{\"id\":\"iLYqtwY56D\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":6}}]",
  "creation": "2024-01-15 10:00:00",
  "custom_blocks": [],
  "docstatus": 0,
@@ -13,56 +13,6 @@
  "is_hidden": 0,
  "label": "Re Studio Booking",
  "links": [
-  {
-   "description": "Manage photographers and their schedules",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Photographers",
-   "link_count": 4,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Photographer",
-   "link_count": 0,
-   "link_to": "Photographer",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Photographer Schedule",
-   "link_count": 0,
-   "link_to": "Photographer Schedule",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Photographer Holiday",
-   "link_count": 0,
-   "link_to": "Photographer Holiday",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Photographer Leave",
-   "link_count": 0,
-   "link_to": "Photographer Leave",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
   {
    "hidden": 0,
    "is_query_report": 0,
@@ -89,56 +39,6 @@
    "label": "Category",
    "link_count": 0,
    "link_to": "Category",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "description": "Manage studio bookings and appointments",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Bookings",
-   "link_count": 4,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Client",
-   "link_count": 0,
-   "link_to": "Client",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Booking Quotation",
-   "link_count": 0,
-   "link_to": "Booking Quotation",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Booking",
-   "link_count": 0,
-   "link_to": "Booking",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Booking Invoice",
-   "link_count": 0,
-   "link_to": "Booking Invoice",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -250,9 +150,177 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "description": "Manage studio bookings and appointments",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Bookings",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking Quotation",
+   "link_count": 0,
+   "link_to": "Booking Quotation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking",
+   "link_count": 0,
+   "link_to": "Booking",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking Invoice",
+   "link_count": 0,
+   "link_to": "Booking Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "description": "Manage photographers and their schedules",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Photographers",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Photographer",
+   "link_count": 0,
+   "link_to": "Photographer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Photographer Schedule",
+   "link_count": 0,
+   "link_to": "Photographer Schedule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Photographer Holiday",
+   "link_count": 0,
+   "link_to": "Photographer Holiday",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Photographer Leave",
+   "link_count": 0,
+   "link_to": "Photographer Leave",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Serviecs & Package",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service",
+   "link_count": 0,
+   "link_to": "Service",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Package",
+   "link_count": 0,
+   "link_to": "Package",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Category",
+   "link_count": 0,
+   "link_to": "Category",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "CRM",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Lead",
+   "link_count": 0,
+   "link_to": "Lead",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Client",
+   "link_count": 0,
+   "link_to": "Client",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "City",
+   "link_count": 0,
+   "link_to": "City",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-10-20 00:35:02.749860",
+ "modified": "2025-11-01 18:09:34.663043",
  "modified_by": "Administrator",
  "module": "Re Studio Booking",
  "name": "Re Studio Booking",

@@ -13,11 +13,33 @@ frappe.ui.form.on('Booking', {
 			frm.set_value('current_employee', frappe.session.user);
 		}
 		
+		// إضافة زر "إنشاء فاتورة من الحجز" للحجوزات المحفوظة فقط
+		if (!frm.is_new() && frm.doc.status !== 'Cancelled') {
+			// التحقق من وجود فاتورة مرتبطة بهذا الحجز
+			frappe.db.get_value('Booking Invoice', {'booking': frm.doc.name}, 'name')
+				.then(r => {
+					if (r && r.message && r.message.name) {
+						// إذا كانت هناك فاتورة موجودة، عرض زر للانتقال إليها
+						frm.add_custom_button(__('عرض الفاتورة'), function() {
+							frappe.set_route('Form', 'Booking Invoice', r.message.name);
+						}, __('الفواتير'));
+					} else {
+						// إذا لم تكن هناك فاتورة، عرض زر لإنشائها
+						frm.add_custom_button(__('إنشاء فاتورة من الحجز'), function() {
+							create_invoice_from_booking(frm);
+						}, __('الفواتير'));
+					}
+				});
+		}
+		
 		// عرض إعدادات الاستديو من General Settings
 		load_studio_settings(frm);
 		
 		// Filter services and packages based on booking type
 		setup_filters(frm);
+		
+		// تحديث عرض جدول الخدمات الإضافية
+		toggle_additional_services_table(frm);
 		
 		// ملاحظة مهمة:
 		// لتجنب ظهور "Not Saved" فور فتح مستند محفوظ، لا نقوم بتعديل الحقول
@@ -37,7 +59,79 @@ frappe.ui.form.on('Booking', {
 
 			if (frm.doc.booking_type === 'Package') {
 				calculate_total_used_hours(frm);
+				// حساب إجمالي الباقة مع الخدمات الإضافية إن وجدت
+				if (frm.doc.additional_service) {
+					calculate_package_total_with_services(frm);
+				}
 			}
+		}
+	},
+	
+	tc_name: function(frm) {
+		// جلب نص الشروط والأحكام عند اختيار قالب
+		if (frm.doc.tc_name) {
+			console.log('🔍 Fetching terms for template:', frm.doc.tc_name);
+			frappe.call({
+				method: 'frappe.client.get_value',
+				args: {
+					doctype: 'Terms and Conditions',
+					filters: { name: frm.doc.tc_name },
+					fieldname: 'terms'
+				},
+				callback: function(r) {
+					console.log('📥 Response:', r);
+					if (r && r.message && r.message.terms) {
+						console.log('✅ Setting terms:', r.message.terms.substring(0, 100) + '...');
+						frm.set_value('terms', r.message.terms);
+						frm.refresh_field('terms');
+					} else {
+						console.log('⚠️ No terms found in response');
+					}
+				},
+				error: function(err) {
+					console.error('❌ Error fetching terms:', err);
+				}
+			});
+		} else {
+			console.log('🗑️ Clearing terms field');
+			frm.set_value('terms', '');
+		}
+	},
+	
+	client: function(frm) {
+		// عرض رصيد الكاش باك عند اختيار العميل
+		if (frm.doc.client) {
+			frappe.db.get_value('Client', frm.doc.client, 'cashback_balance', (r) => {
+				if (r && r.cashback_balance) {
+					const balance = parseFloat(r.cashback_balance) || 0;
+					if (balance > 0) {
+						frm.set_df_property('cashback_used', 'description', 
+							`رصيد الكاش باك المتاح: ${format_currency(balance, 'SAR')}`);
+					} else {
+						frm.set_df_property('cashback_used', 'description', 'لا يوجد رصيد كاش باك متاح');
+					}
+				}
+			});
+		}
+	},
+	
+	cashback_used: function(frm) {
+		// التحقق من صحة المبلغ المدخل
+		if (frm.doc.cashback_used && frm.doc.client) {
+			frappe.db.get_value('Client', frm.doc.client, 'cashback_balance', (r) => {
+				if (r && r.cashback_balance) {
+					const balance = parseFloat(r.cashback_balance) || 0;
+					const used = parseFloat(frm.doc.cashback_used) || 0;
+					
+					if (used > balance) {
+						frappe.msgprint(__('رصيد الكاش باك غير كافي. الرصيد المتاح: {0}', [format_currency(balance, 'SAR')]));
+						frm.set_value('cashback_used', 0);
+					} else if (used > (frm.doc.total_amount || 0)) {
+						frappe.msgprint(__('لا يمكن استخدام كاش باك أكثر من قيمة الحجز'));
+						frm.set_value('cashback_used', 0);
+					}
+				}
+			});
 		}
 	},
 	
@@ -47,11 +141,12 @@ frappe.ui.form.on('Booking', {
 			frm.set_value('package', '');
 			frm.set_value('package_name', '');
 			frm.clear_table('package_services_table');
+			frm.clear_table('package_booking_dates');
+			// إخفاء خيار الخدمات الإضافية في Service
+			frm.set_value('additional_service', 0);
 		} else if (frm.doc.booking_type === 'Package') {
-			frm.set_value('service', '');
-			frm.set_value('service_name', '');
-			frm.set_value('category', '');
-			frm.set_value('duration', '');
+			// مسح جدول الخدمات المختارة عند التبديل للباقة
+			frm.clear_table('selected_services_table');
 		}
 		
 		// Setup filters
@@ -59,6 +154,17 @@ frappe.ui.form.on('Booking', {
 		frm.refresh();
 		// تحديث العربون بناءً على النوع الحالي
 		update_deposit_ui(frm);
+		// تحديث عرض جدول الخدمات المختارة
+		toggle_additional_services_table(frm);
+	},
+	
+	additional_service: function(frm) {
+		// عند تفعيل/إلغاء إضافة خدمات فردية
+		toggle_additional_services_table(frm);
+		// إعادة حساب الإجمالي
+		if (frm.doc.booking_type === 'Package') {
+			calculate_package_total_with_services(frm);
+		}
 	},
 	
 	package: function(frm) {
@@ -129,29 +235,95 @@ frappe.ui.form.on('Booking', {
 
 // ================ Booking Service Item - حساب المبلغ الإجمالي تلقائياً ================
 frappe.ui.form.on('Booking Service Item', {
-	service: function(frm, cdt, cdn) {
-		// إعادة حساب المبلغ عند تغيير الخدمة
+    service: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        
+        if (row.service) {
+            // جلب بيانات الخدمة
+            frappe.db.get_doc('Service', row.service).then(service_doc => {
+                // جلب نوع الوحدة ووحدة المدة من الخدمة
+                frappe.model.set_value(cdt, cdn, 'service_unit_type', service_doc.type_unit);
+                frappe.model.set_value(cdt, cdn, 'service_duration_unit', service_doc.duration_unit);
+                
+                // جلب القيمة في عمود mount حسب نوع الوحدة
+                if (service_doc.type_unit === 'مدة') {
+                    // خدمة بالمدة - جلب duration من الخدمة ووضعه في mount
+                    if (service_doc.duration) {
+                        frappe.model.set_value(cdt, cdn, 'mount', service_doc.duration);
+                    }
+                } else {
+                    // خدمات أخرى (Reel/Photo/etc) - جلب mount من الخدمة
+                    if (service_doc.mount) {
+                        frappe.model.set_value(cdt, cdn, 'mount', service_doc.mount);
+                    }
+                }
+                
+                // إعادة حساب المبلغ بعد تحديث القيم
+                setTimeout(() => {
+                    calculate_service_item_total(frm, cdt, cdn);
+                    // إعادة حساب إجمالي Package إذا كانت خدمات إضافية
+                    if (frm.doc.booking_type === 'Package' && frm.doc.additional_service) {
+                        calculate_package_total_with_services(frm);
+                    }
+                }, 200);
+            });
+        }
+    },
+    quantity: function(frm, cdt, cdn) {
+        // إعادة حساب المبلغ عند تغيير عدد الساعات
+        calculate_service_item_total(frm, cdt, cdn);
+        // إعادة حساب إجمالي Package إذا كانت خدمات إضافية
+        if (frm.doc.booking_type === 'Package' && frm.doc.additional_service) {
+            calculate_package_total_with_services(frm);
+        }
+    },
+	
+	mount: function(frm, cdt, cdn) {
+		// إعادة حساب المبلغ عند تغيير العدد/الكمية
 		calculate_service_item_total(frm, cdt, cdn);
+		// إعادة حساب إجمالي Package إذا كانت خدمات إضافية
+		if (frm.doc.booking_type === 'Package' && frm.doc.additional_service) {
+			calculate_package_total_with_services(frm);
+		}
 	},
 	
-	quantity: function(frm, cdt, cdn) {
-		// إعادة حساب المبلغ عند تغيير الكمية
+	min_duration: function(frm, cdt, cdn) {
+		// إعادة حساب المبلغ عند تغيير عدد الدقائق
 		calculate_service_item_total(frm, cdt, cdn);
+		// إعادة حساب إجمالي Package إذا كانت خدمات إضافية
+		if (frm.doc.booking_type === 'Package' && frm.doc.additional_service) {
+			calculate_package_total_with_services(frm);
+		}
 	},
 	
 	service_price: function(frm, cdt, cdn) {
 		// إعادة حساب المبلغ عند تغيير السعر
 		calculate_service_item_total(frm, cdt, cdn);
+		// إعادة حساب إجمالي Package إذا كانت خدمات إضافية
+		if (frm.doc.booking_type === 'Package' && frm.doc.additional_service) {
+			calculate_package_total_with_services(frm);
+		}
 	},
 	
 	discounted_price: function(frm, cdt, cdn) {
 		// إعادة حساب المبلغ عند تغيير السعر المخصوم
 		calculate_service_item_total(frm, cdt, cdn);
+		// إعادة حساب إجمالي Package إذا كانت خدمات إضافية
+		if (frm.doc.booking_type === 'Package' && frm.doc.additional_service) {
+			calculate_package_total_with_services(frm);
+		}
 	},
 	
 	selected_services_table_add: function(frm, cdt, cdn) {
 		// حساب المبلغ للصف الجديد
 		calculate_service_item_total(frm, cdt, cdn);
+	},
+	
+	selected_services_table_remove: function(frm, cdt, cdn) {
+		// إعادة حساب إجمالي Package عند حذف خدمة
+		if (frm.doc.booking_type === 'Package' && frm.doc.additional_service) {
+			calculate_package_total_with_services(frm);
+		}
 	}
 });
 
@@ -185,33 +357,56 @@ function calculate_package_service_item_total(frm, cdt, cdn) {
 	let amount = quantity * package_price;
 	frappe.model.set_value(cdt, cdn, 'amount', amount);
 	
-	// إعادة حساب إجماليات الباقة
+	// إعادة حساب إجماليات الباقة (مع الخدمات الإضافية إن وجدت)
 	setTimeout(function() {
-		calculate_package_totals_ui(frm);
+		if (frm.doc.additional_service) {
+			calculate_package_total_with_services(frm);
+		} else {
+			calculate_package_totals_ui(frm);
+		}
 	}, 100);
 }
 
 function calculate_service_item_total(frm, cdt, cdn) {
-	let row = locals[cdt][cdn];
+    let row = locals[cdt][cdn];
+    
+    if (!row) return;
+    
+    // استخدام mount دائماً كعمود الكمية/الوقت
+    let quantity_or_hours = flt(row.mount || 0);
 	
-	if (!row) return;
-	
-	let quantity = flt(row.quantity || 1);
-	let price = flt(row.discounted_price || 0);
-	
-	// إذا لم يكن هناك سعر مخصوم، استخدم السعر الأصلي
-	if (price === 0) {
+	// اختيار السعر المناسب بناءً على تفعيل Photographer B2B
+	let price = 0;
+	if (frm.doc.photographer_b2b) {
+		// B2B مفعّل - استخدم السعر بعد الخصم
+		price = flt(row.discounted_price || row.service_price || 0);
+	} else {
+		// B2B غير مفعّل - استخدم السعر الأساسي
 		price = flt(row.service_price || 0);
 	}
 	
-	// حساب المبلغ الإجمالي
-	let total = quantity * price;
-	frappe.model.set_value(cdt, cdn, 'total_amount', total);
+    // حساب المبلغ الإجمالي = الكمية × السعر
+    let total = quantity_or_hours * price;
+    frappe.model.set_value(cdt, cdn, 'total_amount', total);
 	
 	// إعادة حساب المجاميع
 	setTimeout(function() {
 		calculate_service_totals(frm);
 	}, 100);
+}
+
+// مساعد: تحديد عامل الكمية/الساعات حسب نوع وحدة الخدمة
+function get_unit_quantity_for_row(row) {
+    if (!row) return 0;
+    if (row.service_unit_type === 'مدة') {
+        if (row.service_duration_unit === 'ساعة') {
+            return flt(row.quantity || 0);
+        } else if (row.service_duration_unit === 'دقيقة') {
+            return flt(row.min_duration || 0);
+        }
+        return 0;
+    }
+    return flt(row.mount || 0);
 }
 
 // ================ Package Booking Dates - حساب الساعات تلقائياً ================
@@ -433,7 +628,10 @@ function load_studio_settings(frm) {
 					};
 					
 					let working_days_arabic = frm.studio_settings.working_days.map(day => days_arabic[day]).join('، ');
-					let friday_status = frm.studio_settings.is_friday_working ? 'يوم عمل' : 'عطلة رسمية';
+					
+					// التحقق من الجمعة: إذا كانت في قائمة أيام العمل = يوم عمل
+					let is_friday_working = frm.studio_settings.working_days.includes('Friday');
+					let friday_status = is_friday_working ? 'يوم عمل ✅' : 'عطلة رسمية ❌';
 					
 					frm.set_intro(`
 						<div style="background: #e7f3ff; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 4px solid #0693e3;">
@@ -480,41 +678,42 @@ function apply_photographer_discount(frm) {
 				});
 				
 				// تطبيق الخصم على جدول الخدمات المختارة
-				if (frm.doc.booking_type === 'Service' && frm.doc.selected_services_table) {
-					let services_with_discount = [];
-					let services_count = 0;
-					
-					frm.doc.selected_services_table.forEach(function(row) {
-						let service_price = flt(row.service_price || 0);
-						
-						// التحقق من أن الخدمة موجودة في جدول المصور
-						if (service_prices[row.service]) {
-							services_count++;
-							let photographer_price = service_prices[row.service];
-							
-							// استخدام السعر المخصوم من المصور إذا كان موجوداً
-							if (photographer_price.discounted_price > 0) {
-								row.discounted_price = photographer_price.discounted_price;
-								row.total_amount = flt(row.quantity || 1) * row.discounted_price;
-								services_with_discount.push(row.service_name || row.service);
-							}
-							// وإلا استخدام نسبة الخصم العامة
-							else if (discount_pct > 0 && service_price > 0) {
-								row.discounted_price = service_price * (1 - discount_pct / 100);
-								row.total_amount = flt(row.quantity || 1) * row.discounted_price;
-								services_with_discount.push(row.service_name || row.service);
-							}
-							// وإلا السعر الأصلي
-							else {
-								row.discounted_price = service_price;
-								row.total_amount = flt(row.quantity || 1) * service_price;
-							}
-						} else {
-							// الخدمة غير موجودة في جدول المصور
-							row.discounted_price = service_price;
-							row.total_amount = flt(row.quantity || 1) * service_price;
-						}
-					});
+                if (frm.doc.booking_type === 'Service' && frm.doc.selected_services_table) {
+                    let services_with_discount = [];
+                    let services_count = 0;
+                    
+                    frm.doc.selected_services_table.forEach(function(row) {
+                        let service_price = flt(row.service_price || 0);
+                        const unit_qty = get_unit_quantity_for_row(row);
+                        
+                        // التحقق من أن الخدمة موجودة في جدول المصور
+                        if (service_prices[row.service]) {
+                            services_count++;
+                            let photographer_price = service_prices[row.service];
+                            
+                            // استخدام السعر المخصوم من المصور إذا كان موجوداً
+                            if (photographer_price.discounted_price > 0) {
+                                row.discounted_price = photographer_price.discounted_price;
+                                row.total_amount = unit_qty * row.discounted_price;
+                                services_with_discount.push(row.service_name || row.service);
+                            }
+                            // وإلا استخدام نسبة الخصم العامة
+                            else if (discount_pct > 0 && service_price > 0) {
+                                row.discounted_price = service_price * (1 - discount_pct / 100);
+                                row.total_amount = unit_qty * row.discounted_price;
+                                services_with_discount.push(row.service_name || row.service);
+                            }
+                            // وإلا السعر الأصلي
+                            else {
+                                row.discounted_price = service_price;
+                                row.total_amount = unit_qty * service_price;
+                            }
+                        } else {
+                            // الخدمة غير موجودة في جدول المصور
+                            row.discounted_price = service_price;
+                            row.total_amount = unit_qty * service_price;
+                        }
+                    });
 					
 					frm.refresh_field('selected_services_table');
 					
@@ -545,16 +744,17 @@ function apply_photographer_discount(frm) {
 }
 
 function reset_prices_to_original(frm) {
-	// إعادة تعيين الأسعار للقيم الأصلية (بدون خصم)
-	if (frm.doc.booking_type === 'Service' && frm.doc.selected_services_table) {
-		frm.doc.selected_services_table.forEach(function(row) {
-			let service_price = flt(row.service_price || 0);
-			row.discounted_price = service_price;
-			row.total_amount = flt(row.quantity || 1) * service_price;
-		});
-		frm.refresh_field('selected_services_table');
-		calculate_service_totals(frm);
-	}
+    // إعادة تعيين الأسعار للقيم الأصلية (بدون خصم)
+    if (frm.doc.booking_type === 'Service' && frm.doc.selected_services_table) {
+        frm.doc.selected_services_table.forEach(function(row) {
+            let service_price = flt(row.service_price || 0);
+            row.discounted_price = service_price;
+            const unit_qty = get_unit_quantity_for_row(row);
+            row.total_amount = unit_qty * service_price;
+        });
+        frm.refresh_field('selected_services_table');
+        calculate_service_totals(frm);
+    }
 }
 
 /**
@@ -634,16 +834,17 @@ function reload_package_services_with_photographer_discount(frm) {
 }
 
 function calculate_service_totals(frm) {
-	// حساب المبلغ الأساسي والإجمالي للخدمات
-	let base_total = 0;
-	let final_total = 0;
-	
-	if (frm.doc.selected_services_table) {
-		frm.doc.selected_services_table.forEach(function(row) {
-			base_total += flt(row.service_price || 0) * flt(row.quantity || 1);
-			final_total += flt(row.total_amount || 0);
-		});
-	}
+    // حساب المبلغ الأساسي والإجمالي للخدمات
+    let base_total = 0;
+    let final_total = 0;
+    
+    if (frm.doc.selected_services_table) {
+        frm.doc.selected_services_table.forEach(function(row) {
+            const unit_qty = get_unit_quantity_for_row(row);
+            base_total += flt(row.service_price || 0) * unit_qty;
+            final_total += flt(row.total_amount || 0);
+        });
+    }
 	
 	frm.set_value('base_amount', base_total);
 	frm.set_value('total_amount', final_total);
@@ -655,19 +856,25 @@ function calculate_service_totals(frm) {
 function calculate_package_totals_ui(frm) {
 	// حساب المجاميع للباقة من جدول الخدمات
 	let base_total = 0;
-	let final_total = 0;
+	let package_final_total = 0;
 	(frm.doc.package_services_table || []).forEach(function(row) {
 		const qty = flt(row.quantity || 1);
 		const base_price = flt(row.base_price || 0);
 		const package_price = flt(row.package_price || 0);
 		const amount = flt(row.amount || 0);
 		
+		// المبلغ الأساسي للباقة = مجموع (base_price × quantity)
 		base_total += base_price * qty;
-		// استخدام amount إذا كان موجوداً، وإلا احسب من package_price × quantity
-		final_total += amount > 0 ? amount : (package_price * qty);
+		// المبلغ الإجمالي للباقة = مجموع amount (أو احتساب من package_price × quantity إذا لم يكن موجوداً)
+		package_final_total += amount > 0 ? amount : (package_price * qty);
 	});
+
+	// ضبط الحقول للباقة فقط (بدون خدمات إضافية)
 	frm.set_value('base_amount_package', base_total);
-	frm.set_value('total_amount_package', final_total);
+	frm.set_value('total_amount_package', package_final_total);
+	// مزامنة الحقول القديمة لضمان ظهور صحيح في الواجهة
+	frm.set_value('package_base_amount', base_total);
+	frm.set_value('package_total_amount', package_final_total);
 	
 	update_deposit_ui(frm);
 }
@@ -745,40 +952,75 @@ function calculate_service_hours(frm) {
 }
 
 function update_services_quantity_from_hours(frm) {
-	// تحديث كميات الخدمات المختارة من إجمالي الساعات المحجوزة
-	if (!frm.doc.total_booked_hours || !frm.doc.selected_services_table) {
-		return;
-	}
-	
-	let total_hours = flt(frm.doc.total_booked_hours);
-	
-	if (total_hours <= 0) {
-		return;
-	}
-	
-	// المرور على كل الخدمات المختارة
-	frm.doc.selected_services_table.forEach(function(row) {
-		// التحقق من أن الخدمة ليست مرنة
-		frappe.db.get_value('Service', row.service, 'is_flexible_service', function(r) {
-			if (r && !r.is_flexible_service) {
-				// تحديث الكمية = إجمالي الساعات
-				frappe.model.set_value(row.doctype, row.name, 'quantity', total_hours);
-				console.log(`📊 تحديث كمية الخدمة ${row.service}: ${total_hours} ساعة`);
-			} else if (r && r.is_flexible_service) {
-				console.log(`⚙️ الخدمة ${row.service} مرنة - لا يتم تحديث الكمية`);
-			}
-		});
-	});
-	
-	// إعادة حساب المجاميع بعد تحديث الكميات
-	setTimeout(function() {
-		calculate_service_totals(frm);
-	}, 500);
+    // تحديث كميات الخدمات المختارة من إجمالي الساعات المحجوزة
+    if (!frm.doc.total_booked_hours || !frm.doc.selected_services_table) {
+        return;
+    }
+    
+    let total_hours = flt(frm.doc.total_booked_hours);
+    
+    if (total_hours <= 0) {
+        return;
+    }
+    
+    // المرور على كل الخدمات المختارة
+    frm.doc.selected_services_table.forEach(function(row) {
+        // حدّث فقط الخدمات التي نوع وحدتها "مدة"
+        if (row.service_unit_type === 'مدة') {
+            // وضع عدد الساعات في عمود mount
+            frappe.model.set_value(row.doctype, row.name, 'mount', total_hours);
+            console.log(`📊 تحديث عدد الساعات للخدمة ${row.service}: ${total_hours} ساعة`);
+        } else {
+            // لا تغيّر خدمات الكمية الأخرى
+            console.log(`⏭️ تخطي تحديث الكمية للخدمة ${row.service} (نوع الوحدة: ${row.service_unit_type || 'غير معروف'})`);
+        }
+    });
+    
+    // إعادة حساب المجاميع بعد تحديث الكميات
+    setTimeout(function() {
+        calculate_service_totals(frm);
+    }, 500);
+}
+
+// دالة إنشاء فاتورة من الحجز
+function create_invoice_from_booking(frm) {
+	frappe.confirm(
+		__('هل تريد إنشاء فاتورة من هذا الحجز؟'),
+		function() {
+			frappe.call({
+				method: 're_studio_booking.re_studio_booking.doctype.booking_invoice.booking_invoice.create_invoice_from_booking',
+				args: {
+					booking: frm.doc.name
+				},
+				freeze: true,
+				freeze_message: __('جاري إنشاء الفاتورة...'),
+				callback: function(r) {
+					if (r.message) {
+						frappe.show_alert({
+							message: __('تم إنشاء الفاتورة بنجاح'),
+							indicator: 'green'
+						}, 5);
+						
+						// الانتقال إلى الفاتورة الجديدة
+						frappe.set_route('Form', 'Booking Invoice', r.message);
+					}
+				}
+			});
+		}
+	);
 }
 
 // تحسين عرض Calendar View
-frappe.views.calendar["Booking"] = frappe.views.calendar.extend({
-	get_events_method: "frappe.desk.calendar.get_events",
+frappe.views.calendar["Booking"] = {
+	field_map: {
+		"start": "start",
+		"end": "end",
+		"id": "name",
+		"title": "title",
+		"allDay": "allDay",
+		"color": "color"
+	},
+	get_events_method: "re_studio_booking.re_studio_booking.doctype.booking.booking.get_calendar_events",
 	options: {
 		header: {
 			left: 'prev,next today',
@@ -811,4 +1053,80 @@ frappe.views.calendar["Booking"] = frappe.views.calendar.extend({
 			}
 		}
 	}
-});
+};
+
+// ================ دوال مساعدة للخدمات الإضافية مع الباقات ================
+
+// دالة لإظهار/إخفاء جدول الخدمات المختارة في حالة Package
+function toggle_additional_services_table(frm) {
+	const isService = frm.doc.booking_type === 'Service';
+	const isPackage = frm.doc.booking_type === 'Package';
+	const hasAdditionalServices = frm.doc.additional_service === 1;
+	
+	// إظهار جدول selected_services_table للخدمات أو للباقات مع الخدمات الإضافية
+	const showServicesTable = isService || (isPackage && hasAdditionalServices);
+	frm.toggle_display('selected_services_table', showServicesTable);
+	frm.toggle_display('additional_services_section', showServicesTable);
+	
+	// إذا تم إلغاء التفعيل أو التبديل للخدمة، مسح الجدول إذا لزم الأمر
+	if (!showServicesTable) {
+		frm.clear_table('selected_services_table');
+		frm.refresh_field('selected_services_table');
+	}
+}
+
+// دالة لحساب إجمالي الباقة + الخدمات الإضافية
+function calculate_package_total_with_services(frm) {
+	if (frm.doc.booking_type !== 'Package') {
+		return;
+	}
+	
+	// 1) حساب المجاميع للباقة فقط (بعد تطبيق خصم المصور)
+	let base_total = 0;
+	let package_final_total = 0;
+	(frm.doc.package_services_table || []).forEach(row => {
+		const qty = flt(row.quantity || 1);
+		const base_price = flt(row.base_price || 0);
+		const package_price = flt(row.package_price || 0);
+		const amount = flt(row.amount || 0);
+		
+		base_total += base_price * qty;
+		
+		// استخدام amount المحسوب (يحتوي على خصم المصور إذا كان مطبقاً)
+		// أو احتساب من package_price إذا لم يكن amount موجوداً
+		package_final_total += amount > 0 ? amount : (package_price * qty);
+	});
+
+	// 2) حساب مجموع الخدمات الإضافية (مع تطبيق خصم B2B إذا كان مفعلاً)
+	let additional_services_total = 0;
+	if (frm.doc.additional_service && frm.doc.selected_services_table) {
+		frm.doc.selected_services_table.forEach(row => {
+			const mount = flt(row.mount || 0);
+			let price = 0;
+			
+			// تطبيق منطق B2B على الخدمات الإضافية
+			if (frm.doc.photographer_b2b) {
+				// B2B مفعّل - استخدم السعر بعد الخصم
+				price = flt(row.discounted_price || row.service_price || 0);
+			} else {
+				// B2B غير مفعّل - استخدم السعر الأساسي
+				price = flt(row.service_price || 0);
+			}
+			
+			additional_services_total += mount * price;
+		});
+	}
+
+	// الإجمالي النهائي = إجمالي الباقة (بعد الخصم) + إجمالي الخدمات الإضافية (بعد الخصم)
+	const final_total = package_final_total + additional_services_total;
+
+	// تحديث الحقول
+	frm.set_value('base_amount_package', base_total);
+	frm.set_value('total_amount_package', final_total);
+	// مزامنة الحقول القديمة
+	frm.set_value('package_base_amount', base_total);
+	frm.set_value('package_total_amount', final_total);
+
+	// تحديث العربون
+	update_deposit_ui(frm);
+}

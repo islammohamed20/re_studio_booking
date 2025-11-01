@@ -6,61 +6,77 @@
  "default_view": "List",
  "doctype": "DocType",
  "engine": "InnoDB",
- "is_calendar_and_gantt": 1,
  "field_order": [
-   "customer_section",
-   "client",
-   "client_name",
-   "phone",
-   "mobile_no",
-   "column_break_5",
-   "status",
-   "client_email",
-   "company_name",
-   "confirmation_sent",
-   "booking_type_section",
-   "booking_type",
-   "photographer",
-   "photographer_b2b",
-   "column_break_zteg",
-   "current_employee",
-   "current_employee_full_name",
-   "service_section",
-   "service",
-   "service_name",
-   "category",
-   "duration",
-   "selected_services_table",
-   "package_section",
-   "package",
-   "package_name",
-   "package_services_table",
-   "schedule_section",
-   "booking_date",
-   "start_time",
-   "end_time",
-   "booking_datetime",
-   "total_booked_hours",
-   "package_booking_dates",
-   "used_hours",
-   "remaining_hours",
-   "hours_alert_html",
-   "pricing_section",
-   "base_amount",
-   "base_amount_package",
-   "total_amount",
-   "total_amount_package",
-   "deposit_amount",
-   "paid_amount",
-   "column_break_pricing",
-   "payment_method",
-   "payment_status",
-   "transaction_reference_number",
-   "amended_from",
-   "notes_section",
-   "notes",
-   "payment_method_name"
-  ],
+  "customer_section",
+  "party_type",
+  "party_name",
+  "client",
+  "client_name",
+  "phone",
+  "mobile_no",
+  "column_break_5",
+  "status",
+  "client_email",
+  "company_name",
+  "confirmation_sent",
+  "booking_type_section",
+  "booking_type",
+  "photographer",
+  "photographer_b2b",
+  "column_break_zteg",
+  "current_employee",
+  "current_employee_full_name",
+  "booking_creation_date",
+  "service_info_section",
+  "service_base_amount",
+  "service_total_amount",
+  "service_deposit_amount",
+  "package_section",
+  "package",
+  "package_name",
+  "package_base_amount",
+  "package_total_amount",
+  "package_deposit_amount",
+  "additional_service",
+  "package_services_table",
+  "additional_services_section",
+  "selected_services_table",
+  "schedule_section",
+  "package_booking_dates",
+  "section_break_mlmm",
+  "used_hours",
+  "remaining_hours",
+  "hours_alert_html",
+  "column_break_qoro",
+  "booking_date",
+  "start_time",
+  "end_time",
+  "booking_datetime",
+  "total_booked_hours",
+  "column_break_tbsq",
+  "\u0639\u062f\u062f_\u0627\u0644\u0627\u0634\u062e\u0627\u0635_\u0627\u0644\u0645\u0634\u0627\u0631\u0643\u064a\u0646",
+  "\u0623\u0633\u0645\u0627\u0621_\u0627\u0644\u0627\u0634\u062e\u0627\u0635_\u0627\u0644\u0645\u0634\u0627\u0631\u0643\u064a\u0646",
+  "pricing_section",
+  "base_amount",
+  "base_amount_package",
+  "total_amount",
+  "total_amount_package",
+  "column_break_pricing",
+  "cashback_used",
+  "deposit_amount",
+  "paid_amount",
+  "column_break_lszo",
+  "payment_method",
+  "payment_status",
+  "transaction_reference_number",
+  "amended_from",
+  "terms_section",
+  "tc_name",
+  "terms",
+  "notes_section",
+  "notes",
+  "payment_method_name"
+ ],
  "fields": [
   {
    "fieldname": "customer_section",
@@ -68,16 +84,32 @@
    "label": "\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0639\u0645\u064a\u0644"
   },
   {
+   "default": "Client",
+   "fieldname": "party_type",
+   "fieldtype": "Link",
+   "label": "\u0646\u0648\u0639 \u0627\u0644\u0637\u0631\u0641",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "party_name",
+   "fieldtype": "Dynamic Link",
+   "label": "\u0627\u0633\u0645 \u0627\u0644\u0637\u0631\u0641",
+   "options": "party_type"
+  },
+  {
+   "depends_on": "eval:doc.party_type=='Client'",
    "fieldname": "client",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "\u0627\u0644\u0639\u0645\u064a\u0644",
-   "options": "Client",
-   "reqd": 1
+   "options": "Client"
   },
   {
    "fetch_from": "client.client_name",
    "fieldname": "client_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "\u0627\u0633\u0645 \u0627\u0644\u0639\u0645\u064a\u0644",
    "read_only": 1
   },
@@ -129,53 +161,6 @@
    "options": "Photographer"
   },
   {
-   "depends_on": "eval:doc.booking_type=='Service'",
-   "fieldname": "service_section",
-   "fieldtype": "Section Break",
-   "label": "\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u062e\u062f\u0645\u0629"
-  },
-  {
-   "depends_on": "eval:doc.booking_type=='Service'",
-   "fieldname": "service",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "\u0627\u0644\u062e\u062f\u0645\u0629",
-   "options": "Service"
-  },
-  {
-   "depends_on": "eval:doc.booking_type=='Service'",
-   "fetch_from": "service.service_name_en",
-   "fieldname": "service_name",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "\u0627\u0633\u0645 \u0627\u0644\u062e\u062f\u0645\u0629",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.booking_type=='Service'",
-   "fetch_from": "service.category",
-   "fieldname": "category",
-   "fieldtype": "Data",
-   "label": "\u0627\u0644\u0641\u0626\u0629",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.booking_type=='Service'",
-   "fetch_from": "service.duration",
-   "fieldname": "duration",
-   "fieldtype": "Int",
-   "label": "\u0627\u0644\u0645\u062f\u0629",
-   "read_only": 1
-  },
-  {
-   "allow_bulk_edit": 1,
-   "depends_on": "eval:doc.booking_type=='Service'",
-   "fieldname": "selected_services_table",
-   "fieldtype": "Table",
-   "label": "\u0627\u0644\u062e\u062f\u0645\u0627\u062a \u0627\u0644\u0645\u062e\u062a\u0627\u0631\u0629",
-   "options": "Booking Service Item"
-  },
-  {
    "depends_on": "eval:doc.booking_type=='Package'",
    "fieldname": "package_section",
    "fieldtype": "Section Break",
@@ -197,6 +182,33 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.booking_type=='Package'",
+   "fieldname": "package_base_amount",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "\u0627\u0644\u0645\u0628\u0644\u063a \u0627\u0644\u0627\u0633\u0627\u0633\u064a \u0644\u0644\u0628\u0627\u0642\u0629",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Package'",
+   "fieldname": "package_total_amount",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "\u0627\u0644\u0645\u0628\u0644\u063a \u0627\u0644\u0627\u062c\u0645\u0627\u0644\u064a \u0644\u0644\u0628\u0627\u0642\u0629 \u0628\u0639\u062f \u0627\u0644\u062e\u0635\u0645",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Package'",
+   "fieldname": "package_deposit_amount",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "\u0645\u0628\u0644\u063a \u0627\u0644\u0639\u0631\u0628\u0648\u0646 \u0644\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u062d\u062c\u0632",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
    "allow_bulk_edit": 1,
    "allow_on_submit": 1,
    "depends_on": "eval:doc.booking_type=='Package'",
@@ -204,6 +216,20 @@
    "fieldtype": "Table",
    "label": "\u062e\u062f\u0645\u0627\u062a \u0627\u0644\u0628\u0627\u0642\u0629",
    "options": "Booking Package Service"
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Service' || (doc.booking_type=='Package' && doc.additional_service==1)",
+   "fieldname": "additional_services_section",
+   "fieldtype": "Section Break",
+   "label": "\u0627\u0644\u062e\u062f\u0645\u0627\u062a \u0627\u0644\u0645\u062e\u062a\u0627\u0631\u0629"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "depends_on": "eval:doc.booking_type=='Service' || (doc.booking_type=='Package' && doc.additional_service==1)",
+   "fieldname": "selected_services_table",
+   "fieldtype": "Table",
+   "label": "\u0627\u0644\u062e\u062f\u0645\u0627\u062a \u0627\u0644\u0645\u062e\u062a\u0627\u0631\u0629",
+   "options": "Booking Service Item"
   },
   {
    "fieldname": "schedule_section",
@@ -216,30 +242,26 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "is_calendar_and_gantt": 1,
    "label": "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u062d\u062c\u0632"
   },
   {
    "depends_on": "eval:doc.booking_type=='Service'",
    "fieldname": "start_time",
    "fieldtype": "Time",
-   "is_calendar_and_gantt": 1,
    "label": "\u0648\u0642\u062a \u0627\u0644\u0628\u062f\u0627\u064a\u0629"
   },
   {
    "depends_on": "eval:doc.booking_type=='Service'",
    "fieldname": "end_time",
    "fieldtype": "Time",
-   "is_calendar_and_gantt": 1,
    "label": "\u0648\u0642\u062a \u0627\u0644\u0646\u0647\u0627\u064a\u0629"
   },
   {
    "fieldname": "booking_datetime",
    "fieldtype": "Datetime",
-   "label": "Booking DateTime",
    "hidden": 1,
-   "read_only": 1,
-   "is_calendar_and_gantt": 1
+   "label": "Booking DateTime",
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.booking_type=='Service'",
@@ -262,6 +284,23 @@
    "label": "\u0639\u062f\u062f \u0627\u0644\u0633\u0627\u0639\u0627\u062a \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u0629",
    "precision": "2",
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "terms_section",
+   "fieldtype": "Section Break",
+   "label": "\u0627\u0644\u0634\u0631\u0648\u0637 \u0648\u0627\u0644\u0623\u062d\u0643\u0627\u0645"
+  },
+  {
+   "fieldname": "tc_name",
+   "fieldtype": "Link",
+   "label": "\u0642\u0627\u0644\u0628 \u0627\u0644\u0634\u0631\u0648\u0637",
+   "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "terms",
+   "fieldtype": "Text Editor",
+   "label": "\u0627\u0644\u0634\u0631\u0648\u0637 \u0648\u0627\u0644\u0623\u062d\u0643\u0627\u0645"
   },
   {
    "fieldname": "notes_section",
@@ -326,6 +365,15 @@
    "label": "\u0627\u0644\u0645\u0628\u0644\u063a \u0627\u0644\u0645\u062f\u0641\u0648\u0639",
    "precision": "2",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "\u0645\u0628\u0644\u063a \u0627\u0644\u0643\u0627\u0634 \u0628\u0627\u0643 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645 \u0641\u064a \u0647\u0630\u0627 \u0627\u0644\u062d\u062c\u0632",
+   "fieldname": "cashback_used",
+   "fieldtype": "Currency",
+   "label": "\u0627\u0644\u0643\u0627\u0634 \u0628\u0627\u0643 \u0627\u0644\u0639\u0645\u064a\u0644",
+   "options": "SAR",
+   "precision": "2"
   },
   {
    "depends_on": "eval:doc.booking_type=='Package'",
@@ -418,22 +466,95 @@
    "default": "__user",
    "fieldname": "current_employee",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "\u0627\u0644\u0645\u0648\u0638\u0641",
-   "options": "User",
-   "read_only": 1
+   "options": "User"
   },
   {
    "fetch_from": "current_employee.full_name",
    "fieldname": "current_employee_full_name",
    "fieldtype": "Data",
-   "hidden": 1,
    "in_list_view": 1,
    "label": "\u0627\u0633\u0645 \u0627\u0644\u0645\u0648\u0638\u0641 \u0627\u0644\u0643\u0627\u0645\u0644",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "additional_service",
+   "fieldtype": "Check",
+   "label": "\u0627\u0636\u0627\u0641\u0629 \u062e\u062f\u0645\u0627\u062a \u0641\u0631\u062f\u064a\u0629"
+  },
+  {
+   "default": "Today",
+   "fieldname": "booking_creation_date",
+   "fieldtype": "Date",
+   "label": "\u062a\u0627\u0631\u064a\u062e \u0627\u0646\u0634\u0627\u0621 \u0627\u0644\u062d\u062c\u0632"
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Service'",
+   "fieldname": "service_info_section",
+   "fieldtype": "Section Break",
+   "label": "\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u062e\u062f\u0645\u0629"
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Service'",
+   "fieldname": "service_base_amount",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "\u0627\u0644\u0645\u0628\u0644\u063a \u0627\u0644\u0623\u0633\u0627\u0633\u064a \u0642\u0628\u0644 \u0627\u0644\u062e\u0635\u0645",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Service'",
+   "fieldname": "service_total_amount",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "\u0627\u0644\u0645\u0628\u0644\u063a \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0628\u0639\u062f \u0627\u0644\u062e\u0635\u0645",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.booking_type=='Service'",
+   "fieldname": "service_deposit_amount",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "\u0645\u0628\u0644\u063a \u0627\u0644\u0639\u0631\u0628\u0648\u0646 \u0644\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u062d\u062c\u0632",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lszo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_mlmm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_tbsq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "\u0639\u062f\u062f_\u0627\u0644\u0627\u0634\u062e\u0627\u0635_\u0627\u0644\u0645\u0634\u0627\u0631\u0643\u064a\u0646",
+   "fieldtype": "Select",
+   "label": "\u0639\u062f\u062f \u0627\u0644\u0627\u0634\u062e\u0627\u0635 \u0627\u0644\u0645\u0634\u0627\u0631\u0643\u064a\u0646",
+   "options": "1\n2\n3\n4"
+  },
+  {
+   "fieldname": "\u0623\u0633\u0645\u0627\u0621_\u0627\u0644\u0627\u0634\u062e\u0627\u0635_\u0627\u0644\u0645\u0634\u0627\u0631\u0643\u064a\u0646",
+   "fieldtype": "Small Text",
+   "label": "\u0623\u0633\u0645\u0627\u0621 \u0627\u0644\u0627\u0634\u062e\u0627\u0635 \u0627\u0644\u0645\u0634\u0627\u0631\u0643\u064a\u0646"
+  },
+  {
+   "fieldname": "column_break_qoro",
+   "fieldtype": "Column Break"
   }
  ],
+ "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2025-10-19 22:25:36.981244",
+ "modified": "2025-11-01 19:01:18.340623",
  "modified_by": "Administrator",
  "module": "Re Studio Booking",
  "name": "Booking",
@@ -454,6 +575,7 @@
   },
   {
    "create": 1,
+   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
@@ -464,11 +586,26 @@
    "write": 1
   },
   {
+   "create": 1,
+   "delete": 1,
    "email": 1,
+   "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Re Studio Agent"
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Re Studio Agent",
+   "write": 1
   }
  ],
  "row_format": "Dynamic",

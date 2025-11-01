@@ -9,6 +9,7 @@
   "basic_info_section",
   "client_name",
   "client_type",
+  "specialization",
   "column_break_3",
   "status",
   "company_name",
@@ -29,7 +30,12 @@
   "name_person",
   "column_break_19",
   "tax_id",
-  "b2b_discount_percentage"
+  "b2b_discount_percentage",
+  "cashback_section",
+  "cashback_balance",
+  "column_break_cashback",
+  "total_cashback_earned",
+  "total_cashback_used"
  ],
  "fields": [
   {
@@ -54,7 +60,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "\u0646\u0648\u0639 \u0627\u0644\u0639\u0645\u064a\u0644",
-   "options": "Individual\nCompany"
+   "options": "\nIndividual\nCompany"
   },
   {
    "depends_on": "eval:doc.client_type=='Company'",
@@ -62,6 +68,39 @@
    "fieldtype": "Percent",
    "label": "\u0646\u0633\u0628\u0629 \u062e\u0635\u0645 \u0627\u0644\u0634\u0631\u0643\u0629",
    "precision": "2"
+  },
+  {
+   "fieldname": "cashback_section",
+   "fieldtype": "Section Break",
+   "label": "\u0646\u0642\u0627\u0637 \u0627\u0644\u0643\u0627\u0634 \u0628\u0627\u0643"
+  },
+  {
+   "default": "0",
+   "fieldname": "cashback_balance",
+   "fieldtype": "Currency",
+   "label": "\u0631\u0635\u064a\u062f \u0627\u0644\u0643\u0627\u0634 \u0628\u0627\u0643",
+   "options": "SAR",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_cashback",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_cashback_earned",
+   "fieldtype": "Currency",
+   "label": "\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0646\u0642\u0627\u0637 \u0627\u0644\u0645\u0643\u062a\u0633\u0628\u0629",
+   "options": "SAR",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_cashback_used",
+   "fieldtype": "Currency",
+   "label": "\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0646\u0642\u0627\u0637 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u0629",
+   "options": "SAR",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_3",
@@ -103,7 +142,8 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "\u0631\u0642\u0645 \u0627\u0644\u0647\u0627\u062a\u0641",
-   "options": "Phone"
+   "options": "Phone",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_8",
@@ -130,8 +170,9 @@
   {
    "allow_in_quick_entry": 1,
    "fieldname": "city",
-   "fieldtype": "Data",
-   "label": "\u0627\u0644\u0645\u062f\u064a\u0646\u0629"
+   "fieldtype": "Link",
+   "label": "\u0627\u0644\u0645\u062f\u064a\u0646\u0629",
+   "options": "City"
   },
   {
    "fieldname": "column_break_13",
@@ -174,7 +215,8 @@
    "fieldname": "from",
    "fieldtype": "Select",
    "label": "Source From",
-   "options": "Indoor\nOutdoor\nfrom Employee"
+   "options": "\nIndoor\nOutdoor\nfrom Employee",
+   "reqd": 1
   },
   {
    "allow_in_quick_entry": 1,
@@ -189,10 +231,20 @@
    "fieldname": "name_person",
    "fieldtype": "Data",
    "label": "Name Person"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "specialization",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "\u0627\u0644\u0648\u0638\u064a\u0641\u0629",
+   "options": "\u0646\u0627\u0626\u0628 \u0628\u0631\u0644\u0645\u0627\u0646\u064a\n\u0645\u062f\u0631\u0633\n\u062f\u0643\u062a\u0648\u0631\n\u0645\u0647\u0646\u062f\u0633\n\u0645\u062d\u0627\u0645\u064a\n\u0635\u064a\u062f\u0644\u064a\nBroker\n\u062a\u062c\u0627\u0631\u064a\n\u0645\u0642\u0627\u0648\u0644\n\u0623\u0633\u062a\u0627\u0630 \u062c\u0627\u0645\u0639\u064a",
+   "reqd": 1
   }
  ],
  "links": [],
- "modified": "2025-10-18 21:21:51.511835",
+ "modified": "2025-11-01 20:13:37.721766",
  "modified_by": "Administrator",
  "module": "Re Studio Booking",
  "name": "Client",
@@ -223,13 +275,26 @@
    "write": 1
   },
   {
+   "create": 1,
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Re Studio Agent"
+   "role": "Re Studio Agent",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Mangaer",
+   "share": 1
   }
  ],
+ "protect_attached_files": 1,
  "quick_entry": 1,
  "row_format": "Dynamic",
  "sort_field": "modified",

@@ -4,6 +4,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import getdate, add_to_date, get_first_day, get_last_day
+from frappe.utils.data import cstr
 import json
 
 class BookingReport(Document):
@@ -44,7 +45,7 @@ class BookingReport(Document):
 			"Booking",
 			filters=filters,
 			fields=[
-				"name", "customer_name", "booking_date", "start_time", 
+				"name", "client_name", "booking_date", "start_time", 
 				"end_time", "service", "photographer", "status"
 			],
 			order_by="booking_date, start_time"
@@ -57,10 +58,23 @@ class BookingReport(Document):
 		for booking in bookings:
 			status = booking.status
 			status_counts[status] = status_counts.get(status, 0) + 1
+		
+		# Convert dates/times to strings for JSON serialization
+		bookings_serializable = []
+		for booking in bookings:
+			booking_dict = dict(booking)
+			# Always stringify known date/time fields to avoid timedelta issues
+			if 'booking_date' in booking_dict:
+				booking_dict['booking_date'] = cstr(booking_dict.get('booking_date'))
+			if 'start_time' in booking_dict:
+				booking_dict['start_time'] = cstr(booking_dict.get('start_time'))
+			if 'end_time' in booking_dict:
+				booking_dict['end_time'] = cstr(booking_dict.get('end_time'))
+			bookings_serializable.append(booking_dict)
 			
 		# Save report data
 		self.report_data = json.dumps({
-			"bookings": bookings,
+			"bookings": bookings_serializable,
 			"total_bookings": total_bookings,
 			"status_counts": status_counts
 		})
@@ -147,16 +161,21 @@ class BookingReport(Document):
 			SELECT 
 				service, 
 				COUNT(*) as booking_count,
-				SUM(price) as total_revenue
+				SUM(total_amount) as total_revenue
 			FROM `tabBooking`
 			WHERE booking_date BETWEEN %s AND %s
 			AND status = 'Completed'
 			GROUP BY service
 			ORDER BY total_revenue DESC
 		""", (self.start_date, self.end_date), as_dict=True)
+
+		# Ensure JSON-serializable types
+		for row in revenue_by_service:
+			row["booking_count"] = int(row.get("booking_count", 0) or 0)
+			row["total_revenue"] = float(row.get("total_revenue", 0) or 0)
 		
 		# Calculate total revenue
-		total_revenue = sum(item.total_revenue for item in revenue_by_service)
+		total_revenue = float(sum(item.get("total_revenue", 0) for item in revenue_by_service))
 		
 		# Save report data
 		self.report_data = json.dumps({
@@ -173,35 +192,50 @@ class BookingReport(Document):
 	def get_date_filters(self):
 		"""Get date filters based on date range"""
 		if self.date_range == "Custom":
-			return {
-				"booking_date": ["between", [self.start_date, self.end_date]]
-			}
+			# Use provided custom range as-is
+			self.start_date = self.start_date
+			self.end_date = self.end_date
+			return {"booking_date": ["between", [self.start_date, self.end_date]]}
 		elif self.date_range == "Today":
 			today = getdate()
-			return {"booking_date": today}
+			self.start_date = today
+			self.end_date = today
+			return {"booking_date": ["between", [self.start_date, self.end_date]]}
 		elif self.date_range == "This Week":
 			today = getdate()
 			start_date = add_to_date(today, days=-(today.weekday()), hours=0, minutes=0, seconds=0)
 			end_date = add_to_date(start_date, days=6, hours=0, minutes=0, seconds=0)
-			return {"booking_date": ["between", [start_date, end_date]]}
+			self.start_date = start_date
+			self.end_date = end_date
+			return {"booking_date": ["between", [self.start_date, self.end_date]]}
 		elif self.date_range == "This Month":
 			today = getdate()
 			start_date = get_first_day(today)
 			end_date = get_last_day(today)
-			return {"booking_date": ["between", [start_date, end_date]]}
+			self.start_date = start_date
+			self.end_date = end_date
+			return {"booking_date": ["between", [self.start_date, self.end_date]]}
 		elif self.date_range == "Last Month":
 			today = getdate()
 			last_month = add_to_date(today, months=-1)
 			start_date = get_first_day(last_month)
 			end_date = get_last_day(last_month)
-			return {"booking_date": ["between", [start_date, end_date]]}
+			self.start_date = start_date
+			self.end_date = end_date
+			return {"booking_date": ["between", [self.start_date, self.end_date]]}
 		elif self.date_range == "This Year":
 			today = getdate()
 			start_date = getdate(f"{today.year}-01-01")
 			end_date = getdate(f"{today.year}-12-31")
-			return {"booking_date": ["between", [start_date, end_date]]}
+			self.start_date = start_date
+			self.end_date = end_date
+			return {"booking_date": ["between", [self.start_date, self.end_date]]}
 		else:
-			return {}
+			# Default to today if unknown range
+			today = getdate()
+			self.start_date = today
+			self.end_date = today
+			return {"booking_date": ["between", [self.start_date, self.end_date]]}
 		
 	@frappe.whitelist()
 	def get_report_data(self):

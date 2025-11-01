@@ -17,25 +17,53 @@ class BookingInvoice(Document):
 
 		Current simplified model:
 		- No discount / tax fields maintained in this DocType.
-		- For Service bookings: if selected_services_table has rows use sum(row.total_amount or row.service_price * qty).
-		- For Package bookings: derive sum of (package_price * quantity) from package_services_table.
+		- For Service bookings: if selected_services_table has rows use sum(row.total_amount or row.service_price * unit_qty).
+		- For Package bookings: sum of package services + any additional selected services (unit-based).
 		- If total_amount already set (e.g. copied from Booking) trust it unless child-row recomputation differs (then overwrite to keep consistency).
 		"""
 		original_total = flt(self.total_amount)
 		computed = 0.0
 		if getattr(self, 'booking_type', None) == 'Service':
+			def _unit_qty(r):
+				unit_type = getattr(r, 'service_unit_type', '') or ''
+				duration_unit = getattr(r, 'service_duration_unit', '') or ''
+				if unit_type == 'مدة':
+					if duration_unit == 'ساعة':
+						return flt(getattr(r, 'quantity', 0) or 0)
+					elif duration_unit == 'دقيقة':
+						return flt(getattr(r, 'min_duration', 0) or 0)
+					return 0.0
+				return flt(getattr(r, 'mount', 0) or 0)
+
 			for row in (getattr(self, 'selected_services_table', []) or []):
-				qty = flt(getattr(row, 'quantity', 1) or 1)
 				row_total = flt(getattr(row, 'total_amount', 0))
 				if not row_total:
-					price = flt(getattr(row, 'service_price', 0) or getattr(row, 'discounted_price', 0))
-					row_total = price * qty
+					price = flt(getattr(row, 'discounted_price', 0) or getattr(row, 'service_price', 0))
+					row_total = price * _unit_qty(row)
 				computed += row_total
 		elif getattr(self, 'booking_type', None) == 'Package':
+			# 1) إجمالي خدمات الباقة
 			for row in (getattr(self, 'package_services_table', []) or []):
 				qty = flt(getattr(row, 'quantity', 1) or 1)
 				price = flt(getattr(row, 'package_price', 0) or getattr(row, 'service_price', 0) or getattr(row, 'base_price', 0))
 				computed += price * qty
+			# 2) إضافة الخدمات الفردية المختارة (إن وجدت)
+			def _unit_qty_pkg(r):
+				unit_type = getattr(r, 'service_unit_type', '') or ''
+				duration_unit = getattr(r, 'service_duration_unit', '') or ''
+				if unit_type == 'مدة':
+					if duration_unit == 'ساعة':
+						return flt(getattr(r, 'quantity', 0) or 0)
+					elif duration_unit == 'دقيقة':
+						return flt(getattr(r, 'min_duration', 0) or 0)
+					return 0.0
+				return flt(getattr(r, 'mount', 0) or 0)
+			for row in (getattr(self, 'selected_services_table', []) or []):
+				row_total = flt(getattr(row, 'total_amount', 0))
+				if not row_total:
+					price = flt(getattr(row, 'discounted_price', 0) or getattr(row, 'service_price', 0))
+					row_total = price * _unit_qty_pkg(row)
+				computed += row_total
 		# If we computed a positive amount and it differs from stored total, update
 		if computed > 0 and abs(computed - original_total) > 0.0001:
 			self.total_amount = computed
@@ -115,6 +143,66 @@ class BookingInvoice(Document):
 		if payment_dates:
 			return max(payment_dates)
 		return None
+	
+	def create_journal_entry(self):
+		"""إنشاء قيد محاسبي للمبالغ المدفوعة"""
+		if not self.company:
+			frappe.throw("يجب تحديد الشركة لإنشاء القيد المحاسبي")
+		
+		if not self.cost_center:
+			frappe.throw("يجب تحديد مركز التكلفة لإنشاء القيد المحاسبي")
+		
+		if not self.debit_to or not self.income_account:
+			frappe.throw("يجب تحديد حساب المدين وحساب الإيرادات لإنشاء القيد المحاسبي")
+		
+		if self.paid_amount <= 0:
+			frappe.throw("لا يمكن إنشاء قيد محاسبي بدون مبالغ مدفوعة")
+		
+		# إنشاء القيد اليومي
+		je = frappe.get_doc({
+			'doctype': 'Journal Entry',
+			'voucher_type': 'Journal Entry',
+			'naming_series': 'ACC-JV-.YYYY.-',
+			'company': self.company,
+			'posting_date': self.invoice_date or today(),
+			'user_remark': f'قيد محاسبي للفاتورة {self.name} - العميل: {self.client_name or "غير محدد"}',
+			'accounts': [
+				{
+					# المدين: حساب الخزينة/البنك
+					'account': self.debit_to,
+					'debit_in_account_currency': self.paid_amount,
+					'credit_in_account_currency': 0,
+					'cost_center': self.cost_center,
+					'reference_type': 'Booking Invoice',
+					'reference_name': self.name,
+					'user_remark': f'استلام مبلغ من الفاتورة {self.name}'
+				},
+				{
+					# الدائن: حساب الإيرادات
+					'account': self.income_account,
+					'debit_in_account_currency': 0,
+					'credit_in_account_currency': self.paid_amount,
+					'cost_center': self.cost_center,
+					'reference_type': 'Booking Invoice',
+					'reference_name': self.name,
+					'user_remark': f'إيرادات من الفاتورة {self.name}'
+				}
+			]
+		})
+		
+		try:
+			je.insert()
+			je.submit()
+			
+			# حفظ رقم القيد في الفاتورة
+			self.db_set('journal_entry', je.name)
+			
+			frappe.msgprint(f"✅ تم إنشاء القيد المحاسبي {je.name} بنجاح", indicator='green')
+			return je.name
+			
+		except Exception as e:
+			frappe.log_error(f"خطأ في إنشاء القيد المحاسبي: {str(e)}", "Booking Invoice JE Creation Error")
+			frappe.throw(f"حدث خطأ أثناء إنشاء القيد المحاسبي: {str(e)}")
 			
 	def before_submit(self):
 		"""Validate before submission"""
@@ -140,9 +228,22 @@ class BookingInvoice(Document):
 				self.client_name = client_doc.client_name
 				self.customer_email = client_doc.email_id
 				self.phone = client_doc.mobile_no
+		
+		# إنشاء القيد المحاسبي تلقائياً إذا كانت الإعدادات المحاسبية مفعلة
+		if self.paid_amount > 0 and self.cost_center and self.debit_to and self.income_account:
+			self.create_journal_entry()
 			
 	def on_cancel(self):
 		"""Actions on cancellation"""
+		# إلغاء القيد المحاسبي المرتبط
+		if self.journal_entry:
+			try:
+				je = frappe.get_doc("Journal Entry", self.journal_entry)
+				if je.docstatus == 1:  # Submitted
+					je.cancel()
+					frappe.msgprint(f"تم إلغاء القيد المحاسبي {self.journal_entry}")
+			except Exception as e:
+				frappe.log_error(f"خطأ في إلغاء القيد المحاسبي: {str(e)}")
 		self.status = "Cancelled"
 		
 		# Remove invoice link from booking
@@ -163,12 +264,12 @@ class BookingInvoice(Document):
 		row.transaction_reference_number = transaction_reference_number or payment_reference
 		row.date = payment_date or getdate()
 		self.update_payments_aggregation()
-		self.update_payment_status()
+		self.update_invoice_status()
 		self.save()
 		return {
 			'paid_amount': self.paid_amount,
 			'outstanding_amount': self.outstanding_amount,
-			'payment_status': self.payment_status
+			'status': self.status
 		}
 		
 	@frappe.whitelist()
@@ -200,16 +301,30 @@ def mark_as_paid(name: str, payment_method=None, payment_reference=None):
 
 @frappe.whitelist()
 def recalc_invoice_payments(invoice: str):
-    """Reaggregate payments for an invoice (utility)"""
+    """Reaggregate payments for an invoice (utility) - بدون حفظ لتجنب خطأ التعديل المتزامن"""
     doc = frappe.get_doc('Booking Invoice', invoice)
     doc.update_payments_aggregation()
     doc.update_invoice_status()
-    doc.save()
+    # لا نحفظ هنا - فقط نحسب ونرجع القيم
+    # الحفظ سيتم من قبل المستخدم عند الضغط على Save
     return {
         'paid_amount': doc.paid_amount,
         'outstanding_amount': doc.outstanding_amount,
         'status': doc.status
     }
+
+@frappe.whitelist()
+def create_journal_entry_for_invoice(invoice: str):
+	"""إنشاء قيد محاسبي للفاتورة (يدوياً من الزر)"""
+	doc = frappe.get_doc('Booking Invoice', invoice)
+	
+	if doc.docstatus != 1:
+		frappe.throw("يجب اعتماد الفاتورة أولاً لإنشاء القيد المحاسبي")
+	
+	if doc.journal_entry:
+		frappe.throw(f"تم إنشاء قيد محاسبي مسبقاً: {doc.journal_entry}")
+	
+	return doc.create_journal_entry()
 
 @frappe.whitelist()
 def get_booking_child_rows(booking: str):
@@ -315,7 +430,7 @@ def create_invoice_from_booking(booking):
 		"mobile_no": getattr(booking_doc, 'mobile_no', None),
 		"booking": booking_doc.name,
 		"booking_type": getattr(booking_doc, 'booking_type', None),
-		"service": getattr(booking_doc, 'service', None),
+		"booking_creation_date": getattr(booking_doc, 'booking_creation_date', None),
 		"package": getattr(booking_doc, 'package', None),
 		"photographer": getattr(booking_doc, 'photographer', None),
 		"booking_date": getattr(booking_doc, 'booking_date', None),
@@ -327,17 +442,108 @@ def create_invoice_from_booking(booking):
 		"status": "Draft"
 	})
 	
+	# نسخ جداول الخدمات من الحجز إلى الفاتورة (قبل insert)
+	frappe.logger().info(f"🔍 نوع الحجز: {booking_doc.booking_type}")
+	
+	if booking_doc.booking_type == "Package":
+		# نسخ جدول خدمات الباقة
+		if hasattr(booking_doc, 'package_services_table') and booking_doc.package_services_table:
+			frappe.logger().info(f"📦 نسخ {len(booking_doc.package_services_table)} خدمة من جدول الباقة")
+			for service_row in booking_doc.package_services_table:
+				service_name = getattr(service_row, 'service_name', None)
+				service_link = getattr(service_row, 'service', None)
+				frappe.logger().info(f"   - الخدمة: {service_link} | الاسم: {service_name}")
+				
+				invoice_doc.append('package_services_table', {
+					'service': service_link,
+					'service_name': service_name,
+					'quantity': getattr(service_row, 'quantity', 0),
+					'base_price': getattr(service_row, 'base_price', 0),
+					'package_price': getattr(service_row, 'package_price', 0),
+					'amount': getattr(service_row, 'amount', 0),
+				})
+			frappe.logger().info(f"✅ تم إضافة {len(invoice_doc.package_services_table)} صف لجدول الباقة في الفاتورة")
+		
+		# نسخ جدول الخدمات الإضافية (المختارة) إن وجدت
+		frappe.logger().info(f"🔍 فحص selected_services_table في الحجز...")
+		frappe.logger().info(f"🔍 hasattr = {hasattr(booking_doc, 'selected_services_table')}")
+		if hasattr(booking_doc, 'selected_services_table'):
+			frappe.logger().info(f"🔍 الجدول موجود، العدد = {len(booking_doc.selected_services_table) if booking_doc.selected_services_table else 0}")
+		
+		if hasattr(booking_doc, 'selected_services_table') and booking_doc.selected_services_table:
+			frappe.logger().info(f"➕ بدء نسخ {len(booking_doc.selected_services_table)} خدمة إضافية إلى الفاتورة")
+			
+			# تفعيل علامة وجود خدمات إضافية
+			invoice_doc.has_additional_services = 1
+			
+			for idx, service_row in enumerate(booking_doc.selected_services_table):
+				service_link = getattr(service_row, 'service', None)
+				mount = getattr(service_row, 'mount', 0)
+				service_price = getattr(service_row, 'service_price', 0)
+				
+				frappe.logger().info(f"   [{idx+1}] الخدمة: {service_link} | الكمية: {mount} | السعر: {service_price}")
+				
+				invoice_doc.append('selected_services_table', {
+					'service': service_link,
+					'mount': mount,
+					'service_price': service_price,
+					'discounted_price': getattr(service_row, 'discounted_price', 0),
+					'total_amount': getattr(service_row, 'total_amount', 0),
+					'service_unit_type': getattr(service_row, 'service_unit_type', None),
+					'service_duration_unit': getattr(service_row, 'service_duration_unit', None),
+				})
+			
+			current_count = len(invoice_doc.selected_services_table) if hasattr(invoice_doc, 'selected_services_table') and invoice_doc.selected_services_table else 0
+			frappe.logger().info(f"✅ تم نسخ الخدمات الإضافية - العدد في الفاتورة الآن: {current_count}")
+		else:
+			frappe.logger().warning("⚠️ لم يتم نسخ الخدمات الإضافية - الجدول فارغ أو غير موجود")
+	
+	elif booking_doc.booking_type == "Service":
+		# نسخ جدول الخدمات المختارة
+		if hasattr(booking_doc, 'selected_services_table') and booking_doc.selected_services_table:
+			for service_row in booking_doc.selected_services_table:
+				invoice_doc.append('selected_services_table', {
+					'service': getattr(service_row, 'service', None),
+					'mount': getattr(service_row, 'mount', 0),
+					'service_price': getattr(service_row, 'service_price', 0),
+					'discounted_price': getattr(service_row, 'discounted_price', 0),
+					'total_amount': getattr(service_row, 'total_amount', 0),
+					'service_unit_type': getattr(service_row, 'service_unit_type', None),
+					'service_duration_unit': getattr(service_row, 'service_duration_unit', None),
+				})
+	
 	invoice_doc.insert()
 	
-	# إضافة مبلغ العربون كأول دفعة في جدول المدفوعات إذا كان موجوداً
-	if deposit_amount > 0:
-		invoice_doc.append('payment_table', {
-			'paid_amount': deposit_amount,
-			'payment_method': getattr(booking_doc, 'payment_method', None) or 'Cash',
-			'date': getattr(booking_doc, 'booking_date', None) or today(),
-			'transaction_reference_number': f"عربون حجز {booking_doc.name}"
-		})
-		invoice_doc.save()
+	# ملء جدول المدفوعات بناءً على نوع الحجز
+	booking_creation_date = getattr(booking_doc, 'booking_creation_date', None) or today()
+	
+	# الصف الأول دائماً: تاريخ إنشاء الحجز + العربون
+	invoice_doc.append('payment_table', {
+		'date': booking_creation_date,
+		'paid_amount': deposit_amount,
+		'payment_method': getattr(booking_doc, 'payment_method', None) or 'Cash',
+		'transaction_reference_number': f"عربون حجز {booking_doc.name}" if deposit_amount > 0 else ''
+	})
+	
+	# الصفوف التالية تعتمد على نوع الحجز
+	if booking_doc.booking_type == "Service":
+		# Service: صف واحد إضافي = تاريخ الحجز
+		if getattr(booking_doc, 'booking_date', None):
+			invoice_doc.append('payment_table', {
+				'date': booking_doc.booking_date,
+				'paid_amount': 0,  # يُملأ لاحقاً
+			})
+	
+	elif booking_doc.booking_type == "Package":
+		# Package: صفوف من جدول package_booking_dates
+		if hasattr(booking_doc, 'package_booking_dates'):
+			for date_row in (booking_doc.package_booking_dates or []):
+				invoice_doc.append('payment_table', {
+					'date': getattr(date_row, 'booking_date', None),
+					'paid_amount': 0,  # يُملأ لاحقاً
+				})
+	
+	invoice_doc.save()
 	
 	return invoice_doc.name
 
@@ -364,7 +570,6 @@ def create_invoice_from_quotation(quotation):
 		"booking": getattr(quotation_doc, 'booking', None),
 		"quotation": quotation_doc.name,
 		"booking_type": getattr(quotation_doc, 'booking_type', None),
-		"service": getattr(quotation_doc, 'service', None),
 		"package": getattr(quotation_doc, 'package', None),
 		"photographer": getattr(quotation_doc, 'photographer', None),
 		"booking_date": getattr(quotation_doc, 'booking_date', None),

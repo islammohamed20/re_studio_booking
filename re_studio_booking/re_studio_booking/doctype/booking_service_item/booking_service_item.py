@@ -66,9 +66,34 @@ class BookingServiceItem(Document):
 			frappe.log_error(f"Photographer discount error: {str(e)}", "BookingServiceItem")
 
 	def calculate_total_amount(self):
-		qty = flt(getattr(self, 'quantity', 1) or 1)
-		# إذا كان السعر بعد الخصم مختلفاً و > 0 استخدمه
-		if flt(self.discounted_price) > 0 and flt(self.discounted_price) != flt(self.service_price):
-			self.total_amount = qty * flt(self.discounted_price)
-		else:
-			self.total_amount = qty * flt(self.service_price)
+		"""
+		حساب الإجمالي بناءً على نوع الوحدة:
+		- مدة + ساعة → استخدام الحقل quantity (عدد الساعات)
+		- مدة + دقيقة → استخدام الحقل min_duration (عدد الدقائق)
+		- غير مدة → استخدام الحقل mount (عدد/كمية)
+		واختيار السعر المخصوم إن وُجد ومختلف عن الأساسي.
+		"""
+		unit_type = getattr(self, 'service_unit_type', '') or ''
+		duration_unit = getattr(self, 'service_duration_unit', '') or ''
+
+		unit_qty = 0.0
+		try:
+			if unit_type == 'مدة':
+				if duration_unit == 'ساعة':
+					unit_qty = flt(getattr(self, 'quantity', 0) or 0)
+				elif duration_unit == 'دقيقة':
+					unit_qty = flt(getattr(self, 'min_duration', 0) or 0)
+				else:
+					unit_qty = 0.0
+			else:
+				unit_qty = flt(getattr(self, 'mount', 0) or 0)
+		except Exception:
+			unit_qty = 0.0
+
+		base_price = flt(getattr(self, 'service_price', 0) or 0)
+		discount_price = flt(getattr(self, 'discounted_price', 0) or 0)
+		price_to_use = base_price
+		if discount_price > 0 and discount_price != base_price:
+			price_to_use = discount_price
+
+		self.total_amount = unit_qty * price_to_use

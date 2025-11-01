@@ -49,19 +49,8 @@ frappe.ui.form.on('Package Service Item', {
 						frappe.model.set_value(cdt, cdn, 'service_name', r.message.service_name);
 						frappe.model.set_value(cdt, cdn, 'base_price', r.message.base_price);
 						frappe.model.set_value(cdt, cdn, 'package_price', r.message.package_price);
-						
-						// تعيين نوع الوحدة (مدة/كمية)
-						frappe.model.set_value(cdt, cdn, 'unit_type', r.message.unit_type);
-						
-						// تحديد الحقول الافتراضية بناءً على النوع
-						if (r.message.unit_type === 'مدة') {
-							// خدمة زمنية: تعيين الكمية = 1
-							frappe.model.set_value(cdt, cdn, 'quantity', 1);
-						} else {
-							// خدمة كمية: تعيين الكمية = 1
-							frappe.model.set_value(cdt, cdn, 'qty', 1);
-							frappe.model.set_value(cdt, cdn, 'qty_price', r.message.package_price);
-						}
+						frappe.model.set_value(cdt, cdn, 'service_type', r.message.service_type);
+						frappe.model.set_value(cdt, cdn, 'quantity', 1);
 					}
 				}
 			});
@@ -76,18 +65,6 @@ frappe.ui.form.on('Package Service Item', {
 
 	quantity: function(frm, cdt, cdn) {
 		// Calculate total amount when quantity changes
-		calculate_service_total(frm, cdt, cdn);
-		calculate_package_total_price(frm);
-	},
-	
-	qty: function(frm, cdt, cdn) {
-		// Calculate total amount when qty changes (for quantity-based services)
-		calculate_service_total(frm, cdt, cdn);
-		calculate_package_total_price(frm);
-	},
-	
-	qty_price: function(frm, cdt, cdn) {
-		// Calculate total amount when qty_price changes (for quantity-based services)
 		calculate_service_total(frm, cdt, cdn);
 		calculate_package_total_price(frm);
 	},
@@ -205,22 +182,9 @@ function calculate_service_total(frm, cdt, cdn) {
 	let row = locals[cdt][cdn];
 	let total = 0;
 	
-	// حساب بناءً على نوع الوحدة
-	if (row.unit_type === 'مدة') {
-		// خدمات زمنية: package_price × quantity
-		if (row.package_price && row.quantity) {
-			total = row.package_price * row.quantity;
-		}
-	} else if (row.unit_type === 'كمية') {
-		// خدمات كمية: qty_price × qty
-		if (row.qty_price && row.qty) {
-			total = row.qty_price * row.qty;
-		}
-	} else {
-		// fallback: استخدام package_price × quantity
-		if (row.package_price && row.quantity) {
-			total = row.package_price * row.quantity;
-		}
+	// الحساب: package_price × quantity
+	if (row.package_price && row.quantity) {
+		total = row.package_price * row.quantity;
 	}
 	
 	frappe.model.set_value(cdt, cdn, 'total_amount', total);

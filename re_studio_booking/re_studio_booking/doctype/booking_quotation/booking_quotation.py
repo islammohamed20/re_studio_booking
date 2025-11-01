@@ -9,6 +9,10 @@ class BookingQuotation(Document):
 	def validate(self):
 		self.calculate_amounts()
 		self.set_valid_till()
+	
+	def after_insert(self):
+		"""تحديث حالة Lead بعد إنشاء عرض السعر"""
+		self.update_lead_status("Quotation")
 		
 	def calculate_amounts(self):
 		"""Calculate discount, tax and total amounts"""
@@ -68,6 +72,12 @@ class BookingQuotation(Document):
 		"""Reject the quotation"""
 		self.status = "Rejected"
 		self.save()
+	
+	def update_lead_status(self, status):
+		"""تحديث حالة Lead"""
+		if self.quotation_to == "Lead" and self.lead:
+			frappe.db.set_value("Lead", self.lead, "status", status)
+			frappe.db.commit()
 		
 	@frappe.whitelist()
 	def create_booking(self):

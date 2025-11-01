@@ -264,7 +264,7 @@ def compute_package_hours_usage(booking_doc):
 def calculate_service_totals(booking_doc):
 	"""
 	حساب إجماليات حجز الخدمات
-	
+
 	Args:
 		booking_doc: مستند الحجز
 	"""
@@ -284,7 +284,21 @@ def calculate_service_totals(booking_doc):
 	
 	base_total = 0
 	total_booking_amount = 0
-	
+
+	def _get_unit_qty(row):
+		"""تحديد كمية الوحدة الصحيحة للسطر حسب نوع ووحدة الخدمة."""
+		unit_type = getattr(row, 'service_unit_type', '') or ''
+		duration_unit = getattr(row, 'service_duration_unit', '') or ''
+		if unit_type == 'مدة':
+			if duration_unit == 'ساعة':
+				return flt(getattr(row, 'quantity', 0) or 0)
+			elif duration_unit == 'دقيقة':
+				return flt(getattr(row, 'min_duration', 0) or 0)
+			else:
+				return 0.0
+		else:
+			return flt(getattr(row, 'mount', 0) or 0)
+
 	for service_item in booking_doc.selected_services_table:
 		if not getattr(service_item, 'service', None):
 			continue
@@ -303,16 +317,15 @@ def calculate_service_totals(booking_doc):
 			discounted_price = base_price * (1 - photographer_discount_pct / 100.0)
 		service_item.discounted_price = discounted_price
 		
-		quantity = float(getattr(service_item, 'quantity', 1) or 1)
-		base_total += quantity * base_price
+		# استخدم كمية الوحدة الصحيحة بدلاً من الافتراضي 1
+		unit_qty = _get_unit_qty(service_item)
+		base_total += unit_qty * base_price
 		
-		if discounted_price > 0 and discounted_price != base_price:
-			service_item.total_amount = quantity * discounted_price
-		else:
-			service_item.total_amount = quantity * base_price
+		price_to_use = discounted_price if (discounted_price > 0 and discounted_price != base_price) else base_price
+		service_item.total_amount = unit_qty * price_to_use
 		
 		total_booking_amount += service_item.total_amount
-	
+
 	booking_doc.base_amount = base_total
 	booking_doc.total_amount = total_booking_amount
 
@@ -368,8 +381,29 @@ def calculate_package_totals(booking_doc):
 			except Exception:
 				pass
 	
+	# حساب إجمالي الخدمات الإضافية (إن وجدت)
+	additional_services_total = 0
+	if getattr(booking_doc, 'additional_service', False) and hasattr(booking_doc, 'selected_services_table'):
+		photographer_b2b = getattr(booking_doc, 'photographer_b2b', False)
+		
+		for service_row in booking_doc.selected_services_table:
+			mount = flt(getattr(service_row, 'mount', 0))
+			service_price = flt(getattr(service_row, 'service_price', 0))
+			discounted_price = flt(getattr(service_row, 'discounted_price', 0))
+			
+			# تطبيق منطق B2B
+			if photographer_b2b and discounted_price > 0:
+				price = discounted_price
+			else:
+				price = service_price
+			
+			row_total = mount * price
+			service_row.total_amount = row_total
+			additional_services_total += row_total
+	
+	# الإجمالي النهائي = إجمالي الباقة + الخدمات الإضافية
 	booking_doc.base_amount_package = base_total_package
-	booking_doc.total_amount_package = total_after_discount_package
+	booking_doc.total_amount_package = total_after_discount_package + additional_services_total
 
 	# fallback افتراضي للعربون إذا ظل فارغاً بعد الحسابات السابقة
 	if getattr(booking_doc, 'deposit_percentage', None) in (None, ""):

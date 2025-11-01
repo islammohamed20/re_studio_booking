@@ -8,14 +8,19 @@ function refresh_payment_summary(frm) {
 		aggregate_local_payments(frm);
 		return;
 	}
+	
+	// لتجنب خطأ "Document has been modified"، نستخدم set_value بدون حفظ
 	frappe.call({
 		method: 're_studio_booking.re_studio_booking.doctype.booking_invoice.booking_invoice.recalc_invoice_payments',
 		args: { invoice: frm.doc.name },
+		freeze: true,
+		freeze_message: __('جاري حساب المدفوعات...'),
 		callback: function(r) {
 			if (r.message) {
-				frm.set_value('paid_amount', r.message.paid_amount);
-				frm.set_value('outstanding_amount', r.message.outstanding_amount);
-				frm.set_value('status', r.message.status);
+				// تحديث القيم في الذاكرة بدون إطلاق events
+				frm.doc.paid_amount = r.message.paid_amount;
+				frm.doc.outstanding_amount = r.message.outstanding_amount;
+				frm.doc.status = r.message.status;
 				frm.refresh_fields(['paid_amount','outstanding_amount','status']);
 			}
 		}
@@ -45,6 +50,9 @@ function aggregate_local_payments(frm) {
 
 frappe.ui.form.on('Booking Invoice', {
 	refresh: function(frm) {
+		// تحديث تاريخ الاستحقاق التالي
+		update_next_due_date(frm);
+		
 		if (!frm.is_new()) {
 			if (!frm.custom_buttons_added) {
 				frm.add_custom_button('إضافة دفعة', () => {
@@ -65,18 +73,92 @@ frappe.ui.form.on('Booking Invoice', {
 							}
 						}).then(r => {
 							if (r.message) {
-								refresh_payment_summary(frm);
 								frm.reload_doc();
 							}
 						});
 					});
 				}, 'المدفوعات');
+				
 				frm.add_custom_button('إعادة حساب المدفوعات', () => {
 					refresh_payment_summary(frm);
 				}, 'المدفوعات');
+				
+				// زر إنشاء القيد المحاسبي
+				if (frm.doc.docstatus == 1 && frm.doc.paid_amount > 0 && !frm.doc.journal_entry) {
+					if (frm.doc.cost_center && frm.doc.debit_to && frm.doc.income_account) {
+						frm.add_custom_button('إنشاء قيد محاسبي', () => {
+							frappe.confirm(
+								__('هل تريد إنشاء قيد محاسبي للمبلغ المدفوع ({0} ريال)?', [frm.doc.paid_amount]),
+								function() {
+									frappe.call({
+										method: 're_studio_booking.re_studio_booking.doctype.booking_invoice.booking_invoice.create_journal_entry_for_invoice',
+										args: {
+											invoice: frm.doc.name
+										},
+										freeze: true,
+										freeze_message: __('جاري إنشاء القيد المحاسبي...'),
+										callback: function(r) {
+											if (r.message) {
+												frappe.show_alert({
+													message: __('تم إنشاء القيد المحاسبي: {0}', [r.message]),
+													indicator: 'green'
+												}, 5);
+												frm.reload_doc();
+											}
+										}
+									});
+								}
+							);
+						}, 'المحاسبة');
+					}
+				}
+				
+				// زر لعرض القيد المحاسبي المرتبط
+				if (frm.doc.journal_entry) {
+					frm.add_custom_button('عرض القيد المحاسبي', () => {
+						frappe.set_route('Form', 'Journal Entry', frm.doc.journal_entry);
+					}, 'المحاسبة');
+				}
+				
 				frm.custom_buttons_added = true;
 			}
 		}
+	},
+	
+	tc_name: function(frm) {
+		// جلب نص الشروط والأحكام عند اختيار قالب
+		if (frm.doc.tc_name) {
+			console.log('🔍 Fetching terms for template:', frm.doc.tc_name);
+			frappe.call({
+				method: 'frappe.client.get_value',
+				args: {
+					doctype: 'Terms and Conditions',
+					filters: { name: frm.doc.tc_name },
+					fieldname: 'terms'
+				},
+				callback: function(r) {
+					console.log('📥 Response:', r);
+					if (r && r.message && r.message.terms) {
+						console.log('✅ Setting terms:', r.message.terms.substring(0, 100) + '...');
+						frm.set_value('terms', r.message.terms);
+						frm.refresh_field('terms');
+					} else {
+						console.log('⚠️ No terms found in response');
+					}
+				},
+				error: function(err) {
+					console.error('❌ Error fetching terms:', err);
+				}
+			});
+		} else {
+			console.log('🗑️ Clearing terms field');
+			frm.set_value('terms', '');
+		}
+	},
+	
+	booking_type: function(frm) {
+		// إخفاء/إظهار الحقول بناءً على نوع الحجز
+		toggle_booking_type_fields(frm);
 	},
 	booking: function(frm) {
 		if (!frm.doc.booking) return;
@@ -88,7 +170,6 @@ frappe.ui.form.on('Booking Invoice', {
 				const b = r.message;
 				// Basic fields
 				frm.set_value('booking_type', b.booking_type);
-				frm.set_value('service', b.service);
 				frm.set_value('package', b.package);
 				frm.set_value('package_name', b.package_name);
 				frm.set_value('photographer', b.photographer);
@@ -102,6 +183,9 @@ frappe.ui.form.on('Booking Invoice', {
 				// Use phone field consistently
 				frm.set_value('phone', b.phone);
 				frm.set_value('mobile_no', b.mobile_no);
+				
+				// نسخ تاريخ إنشاء الحجز
+				frm.set_value('booking_creation_date', b.booking_creation_date);
 
 				// Map financials: set total_amount and calculate outstanding
 				// Get correct total based on booking type
@@ -122,12 +206,14 @@ frappe.ui.form.on('Booking Invoice', {
 
 				// Force refresh booking_type dependent UI
 				frm.refresh_field('booking_type');
+				
+				// إخفاء/إظهار الحقول بناءً على نوع الحجز
+				toggle_booking_type_fields(frm);
 
 				// Explicit toggle (in case depends_on not re-evaluated yet)
 				const isService = b.booking_type === 'Service';
 				const isPackage = b.booking_type === 'Package';
 				frm.toggle_display('service_section', isService);
-				frm.toggle_display('service', isService);
 				frm.toggle_display('selected_services_table', isService);
 				frm.toggle_display('package_section', isPackage);
 				frm.toggle_display('package_name', isPackage);
@@ -136,7 +222,12 @@ frappe.ui.form.on('Booking Invoice', {
 				// Clear existing child tables
 				frm.clear_table('selected_services_table');
 				frm.clear_table('package_services_table');
-				frm.clear_table('payment_table');  // مسح جدول المدفوعات أيضاً
+				
+				// مسح جدول المدفوعات فقط للفواتير الجديدة
+				// حتى لا نحذف التعديلات اليدوية عند تعديل الفاتورة
+				if (frm.is_new()) {
+					frm.clear_table('payment_table');
+				}
 
 				// Fetch child tables through a server method to ensure proper structure
 				frappe.call({
@@ -156,42 +247,54 @@ frappe.ui.form.on('Booking Invoice', {
 						frm.refresh_field('selected_services_table');
 						frm.refresh_field('package_services_table');
 						
-						// إضافة العربون كأول دفعة في جدول المدفوعات
-						if (b.deposit_amount && b.deposit_amount > 0) {
-							const deposit_row = frm.add_child('payment_table');
-							deposit_row.date = b.booking_date || frappe.datetime.get_today();
-							deposit_row.paid_amount = b.deposit_amount;
-							deposit_row.payment_method = b.payment_method || 'Cash';
-							deposit_row.transaction_reference_number = `عربون حجز ${b.name}`;
+						// ملء جدول المدفوعات فقط للفواتير الجديدة
+						// للحفاظ على التعديلات اليدوية في الفواتير الموجودة
+						if (frm.is_new()) {
+							// الصف الأول دائماً: تاريخ إنشاء الحجز + العربون
+							if (b.booking_creation_date) {
+								const deposit_row = frm.add_child('payment_table');
+								deposit_row.date = b.booking_creation_date;
+								deposit_row.paid_amount = b.deposit_amount || 0;
+								deposit_row.payment_method = b.payment_method || 'Cash';
+								deposit_row.transaction_reference_number = b.deposit_amount > 0 ? `عربون حجز ${b.name}` : '';
+							}
+							
+							// الصفوف التالية تعتمد على نوع الحجز
+							if (b.booking_type === 'Service') {
+								// Service: صف واحد إضافي = تاريخ الحجز (booking_date)
+								if (b.booking_date) {
+									const service_row = frm.add_child('payment_table');
+									service_row.date = b.booking_date;
+									service_row.paid_amount = 0; // يُملأ لاحقاً
+								}
+								
+								frappe.show_alert({
+									message: `تم إضافة صفين: تاريخ الإنشاء (${b.booking_creation_date}) + تاريخ الحجز (${b.booking_date})`,
+									indicator: 'green'
+								}, 5);
+								
+							} else if (b.booking_type === 'Package') {
+								// Package: صفوف من جدول package_booking_dates
+								if (package_dates && package_dates.length > 0) {
+									package_dates.forEach((date_row) => {
+										const payment_row = frm.add_child('payment_table');
+										payment_row.date = date_row.booking_date;
+										payment_row.paid_amount = 0; // يُملأ لاحقاً
+									});
+									
+									frappe.show_alert({
+										message: `تم إضافة ${package_dates.length + 1} صف: تاريخ الإنشاء + ${package_dates.length} تاريخ من الباقة`,
+										indicator: 'green'
+									}, 5);
+								}
+							}
+							
 							frm.refresh_field('payment_table');
 						}
 						
-						// ملء جدول المدفوعات بتواريخ الباقة (Package فقط) - بعد العربون
-						if (b.booking_type === 'Package' && package_dates && package_dates.length > 0) {
-							// إضافة صف لكل تاريخ
-							package_dates.forEach((date_row) => {
-								const payment_row = frm.add_child('payment_table');
-								payment_row.date = date_row.booking_date;
-								payment_row.paid_amount = 0; // يمكن تعديله لاحقاً
-								// payment_method سيتم ملؤه يدوياً
-							});
-							
-							frm.refresh_field('payment_table');
-							
-							frappe.show_alert({
-								message: `تم إضافة العربون + ${package_dates.length} صف للمدفوعات بناءً على تواريخ الباقة`,
-								indicator: 'green'
-							}, 5);
-						} else if (b.deposit_amount && b.deposit_amount > 0) {
-							// عرض تنبيه للعربون فقط (Service bookings)
-							frappe.show_alert({
-								message: `تم إضافة العربون (${b.deposit_amount} ريال) إلى جدول المدفوعات`,
-								indicator: 'green'
-							}, 5);
-						}
-						
-						// إعادة حساب المدفوعات لتحديث paid_amount و outstanding_amount
+						// إعادة حساب المدفوعات وتحديد تاريخ الاستحقاق التالي
 						refresh_payment_summary(frm);
+						update_next_due_date(frm);
 					}
 				}).catch(() => {
 					// Fallback if whitelisted method not yet available (cache / deploy delay)
@@ -227,8 +330,45 @@ frappe.ui.form.on('Booking Invoice', {
 });
 
 frappe.ui.form.on('Payment Table', {
-	paid_amount: function(frm) { refresh_payment_summary(frm); },
+	paid_amount: function(frm) { 
+		refresh_payment_summary(frm);
+		update_next_due_date(frm);
+	},
 	payment_method: function(frm) { /* no-op */ },
 	transaction_reference_number: function(frm) { /* no-op */ },
 	date: function(frm) { /* no-op */ }
 });
+
+// دالة لتحديث تاريخ الاستحقاق التالي
+function update_next_due_date(frm) {
+	if (!frm.doc.payment_table || frm.doc.payment_table.length === 0) {
+		frm.set_value('due_date', null);
+		return;
+	}
+	
+	// البحث عن أول تاريخ بدون مبلغ مدفوع
+	let next_due = null;
+	for (let row of frm.doc.payment_table) {
+		if (!row.paid_amount || row.paid_amount === 0) {
+			if (!next_due || row.date < next_due) {
+				next_due = row.date;
+			}
+		}
+	}
+	
+	if (next_due && next_due !== frm.doc.due_date) {
+		frm.set_value('due_date', next_due);
+	}
+}
+
+// دالة لإخفاء/إظهار الحقول بناءً على نوع الحجز
+function toggle_booking_type_fields(frm) {
+	const isService = frm.doc.booking_type === 'Service';
+	const isPackage = frm.doc.booking_type === 'Package';
+	
+	// Service: إظهار booking_date فقط
+	// Package: إخفاء booking_date (لأن التواريخ في جدول package_booking_dates)
+	frm.toggle_display('booking_date', isService);
+	frm.toggle_display('start_time', isService);
+	frm.toggle_display('end_time', isService);
+}

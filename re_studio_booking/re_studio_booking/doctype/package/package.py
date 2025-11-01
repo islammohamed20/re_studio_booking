@@ -25,21 +25,8 @@ class Package(Document):
 		"""Calculate total price from all services"""
 		total = 0
 		for service in self.package_services:
-			service_total = 0
-			
-			# حساب بناءً على نوع الوحدة
-			if service.unit_type == 'مدة':
-				# خدمات زمنية: package_price × quantity
-				if service.package_price:
-					service_total = flt(service.package_price) * flt(service.quantity or 1)
-			elif service.unit_type == 'كمية':
-				# خدمات كمية: qty_price × qty
-				if service.qty_price and service.qty:
-					service_total = flt(service.qty_price) * flt(service.qty)
-			else:
-				# fallback: استخدام package_price × quantity
-				if service.package_price:
-					service_total = flt(service.package_price) * flt(service.quantity or 1)
+			# الحساب: package_price × quantity
+			service_total = flt(service.package_price or 0) * flt(service.quantity or 0)
 			
 			# تحديث total_amount في الصف
 			service.total_amount = service_total
@@ -117,16 +104,20 @@ def get_service_details(service):
 	"""Get service details for package service table"""
 	service_doc = frappe.get_doc("Service", service)
 	
-	# تحديد نوع الوحدة
-	unit_type = 'مدة' if service_doc.type_unit == 'مدة' else 'كمية'
+	# تحديد نوع الخدمة بناءً على type_unit و duration_unit
+	if service_doc.type_unit == 'مدة':
+		# خدمة زمنية: استخدام duration_unit (دقيقة/ساعة/يوم)
+		service_type = getattr(service_doc, 'duration_unit', 'ساعة')
+	else:
+		# خدمة كمية
+		service_type = 'كمية'
 	
 	return {
 		'service_name': service_doc.service_name_en,
 		'base_price': service_doc.price,
 		'package_price': service_doc.price,
-		'duration': service_doc.duration,
-		'type_unit': service_doc.type_unit,  # نوع الوحدة من Service
-		'unit_type': unit_type  # محول إلى مدة/كمية
+		'service_type': service_type,
+		'duration': service_doc.duration
 	}
 
 @frappe.whitelist()

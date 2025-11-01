@@ -47,6 +47,61 @@ class Booking(Document):
 
 		validate_studio_working_day(self)
 		calculate_deposit_amount(self)
+		self._validate_cashback_usage()
+
+	def after_insert(self):
+		"""بعد إنشاء الحجز: معالجة الكاش باك وتحويل Lead"""
+		# تحويل Lead إلى Client إذا كان الحجز من Lead
+		self.convert_lead_to_client()
+		# خصم الكاش باك المستخدم
+		deduct_cashback_from_client(self)
+		# إضافة نقاط جديدة من الباقة
+		add_cashback_to_client(self)
+	
+	def convert_lead_to_client(self):
+		"""تحويل Lead إلى Client عند إنشاء Booking"""
+		if self.party_type == "Lead" and self.party_name:
+			try:
+				# استيراد دالة التحويل من lead.py
+				from re_studio_booking.re_studio_booking.doctype.lead.lead import convert_to_client
+				
+				# تحويل Lead إلى Client
+				client_name = convert_to_client(self.party_name)
+				
+				# تحديث الحجز بـ Client الجديد
+				self.db_set("client", client_name, update_modified=False)
+				self.db_set("party_type", "Client", update_modified=False)
+				self.db_set("party_name", client_name, update_modified=False)
+				
+				# جلب معلومات Client
+				client_doc = frappe.get_doc("Client", client_name)
+				self.db_set("client_name", client_doc.client_name, update_modified=False)
+				
+				frappe.msgprint(_("تم تحويل العميل المحتمل إلى عميل بنجاح: {0}").format(client_name))
+			except Exception as e:
+				frappe.log_error(f"خطأ في تحويل Lead إلى Client: {str(e)}")
+
+
+	def _validate_cashback_usage(self):
+		"""التحقق من صحة استخدام الكاش باك"""
+		if not self.cashback_used or flt(self.cashback_used) == 0:
+			return
+		
+		if not self.client:
+			frappe.throw(_("يجب تحديد العميل لاستخدام نقاط الكاش باك"))
+		
+		# جلب رصيد العميل
+		client = frappe.get_doc("Client", self.client)
+		available_cashback = flt(client.cashback_balance or 0)
+		
+		# التحقق من كفاية الرصيد
+		if flt(self.cashback_used) > available_cashback:
+			frappe.throw(_("رصيد الكاش باك غير كافي. الرصيد المتاح: {0}").format(available_cashback))
+		
+		# التحقق من عدم تجاوز قيمة الحجز
+		total = flt(self.total_amount or 0)
+		if flt(self.cashback_used) > total:
+			frappe.throw(_("لا يمكن استخدام كاش باك أكثر من قيمة الحجز"))
 
 	def validate(self):
 		"""Validate booking data and calculate totals"""
@@ -1640,3 +1695,61 @@ def get_events(start, end, filters=None):
 			event.title = f"{badge} {event.title}"
 	
 	return all_events
+	
+# ------------------------ Cashback Management ------------------------ #
+def add_cashback_to_client(booking_doc):
+	"""إضافة نقاط الكاش باك للعميل من الباقة"""
+	if not booking_doc.client or booking_doc.booking_type != "Package" or not booking_doc.package:
+		return
+	
+	package = frappe.get_doc("Package", booking_doc.package)
+	cashback_points = flt(package.cashback_points or 0)
+	
+	if cashback_points > 0:
+		client = frappe.get_doc("Client", booking_doc.client)
+		client.cashback_balance = flt(client.cashback_balance or 0) + cashback_points
+		client.total_cashback_earned = flt(client.total_cashback_earned or 0) + cashback_points
+		
+		client.add_comment(
+			"Comment",
+			_("تم إضافة {0} نقطة كاش باك من باقة {1} - الحجز {2}").format(
+				cashback_points, booking_doc.package, booking_doc.name
+			)
+		)
+		client.save(ignore_permissions=True)
+
+def deduct_cashback_from_client(booking_doc):
+	"""خصم الكاش باك المستخدم من رصيد العميل"""
+	if not booking_doc.client or not booking_doc.cashback_used or flt(booking_doc.cashback_used) == 0:
+		return
+	
+	client = frappe.get_doc("Client", booking_doc.client)
+	client.cashback_balance = flt(client.cashback_balance or 0) - flt(booking_doc.cashback_used)
+	client.total_cashback_used = flt(client.total_cashback_used or 0) + flt(booking_doc.cashback_used)
+	client.save(ignore_permissions=True)
+
+
+# ------------------------ User Permissions ------------------------ #
+def has_permission(doc, ptype, user):
+	"""
+	التحكم في صلاحيات عرض الحجوزات
+	- Administrator: يرى كل شيء
+	- Re Studio Manager, HR Manager: يرون كل شيء
+	- الموظف العادي: يرى حجوزاته فقط
+	"""
+	if user == "Administrator":
+		return True
+	
+	# الأدوار المسموح لها برؤية كل الحجوزات
+	allowed_roles = ["Re Studio Manager", "HR Manager", "System Manager"]
+	user_roles = frappe.get_roles(user)
+	
+	if any(role in user_roles for role in allowed_roles):
+		return True
+	
+	# الموظف العادي يرى حجوزاته فقط
+	if doc.current_employee == user:
+		return True
+	
+	return False
+
