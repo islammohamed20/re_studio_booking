@@ -38,7 +38,8 @@ app_include_js = [
     "/assets/re_studio_booking/js/admin_dashboard_utils.js",
     "/assets/re_studio_booking/js/dialogs.js",
     "/assets/re_studio_booking/js/calendar_polyfill.js",
-    "/assets/re_studio_booking/js/booking-form.js"
+    "/assets/re_studio_booking/js/booking-form.js",
+    "/assets/re_studio_booking/js/default_terms.js"
 ]
 
 # Website Settings
@@ -325,15 +326,22 @@ desk_sidebar_items = {
 # ---------------
 
 doc_events = {
-	"Service": {
-		"after_insert": "re_studio_booking.re_studio_booking.hooks_realtime.on_service_update",
-		"on_update": "re_studio_booking.re_studio_booking.hooks_realtime.on_service_update",
-		"validate": "re_studio_booking.re_studio_booking.hooks_realtime.validate_service_deactivation"
-	},
-	"Service Package": {
-		"after_insert": "re_studio_booking.re_studio_booking.hooks_realtime.on_service_package_update",
-		"on_update": "re_studio_booking.re_studio_booking.hooks_realtime.on_service_package_update",
-		"validate": "re_studio_booking.re_studio_booking.hooks_realtime.validate_package_deactivation"
-	}
+    "Service": {
+        "after_insert": "re_studio_booking.re_studio_booking.hooks_realtime.on_service_update",
+        "on_update": "re_studio_booking.re_studio_booking.hooks_realtime.on_service_update",
+        "validate": "re_studio_booking.re_studio_booking.hooks_realtime.validate_service_deactivation"
+    },
+    "Service Package": {
+        "after_insert": "re_studio_booking.re_studio_booking.hooks_realtime.on_service_package_update",
+        "on_update": "re_studio_booking.re_studio_booking.hooks_realtime.on_service_package_update",
+        "validate": "re_studio_booking.re_studio_booking.hooks_realtime.validate_package_deactivation"
+    },
+    "Terms and Conditions": {
+        "validate": "re_studio_booking.re_studio_booking.doctype.terms_and_conditions.terms_and_conditions.enforce_single_default"
+    },
+    "*": {
+        "before_insert": "re_studio_booking.re_studio_booking.doctype.terms_and_conditions.terms_and_conditions.apply_default_tc",
+        "validate": "re_studio_booking.re_studio_booking.doctype.terms_and_conditions.terms_and_conditions.apply_default_tc"
+    }
 }
 

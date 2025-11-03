@@ -152,96 +152,6 @@
    "type": "Link"
   },
   {
-   "description": "Manage studio bookings and appointments",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Bookings",
-   "link_count": 3,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Booking Quotation",
-   "link_count": 0,
-   "link_to": "Booking Quotation",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Booking",
-   "link_count": 0,
-   "link_to": "Booking",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Booking Invoice",
-   "link_count": 0,
-   "link_to": "Booking Invoice",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "description": "Manage photographers and their schedules",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Photographers",
-   "link_count": 4,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Photographer",
-   "link_count": 0,
-   "link_to": "Photographer",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Photographer Schedule",
-   "link_count": 0,
-   "link_to": "Photographer Schedule",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Photographer Holiday",
-   "link_count": 0,
-   "link_to": "Photographer Holiday",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Photographer Leave",
-   "link_count": 0,
-   "link_to": "Photographer Leave",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
    "hidden": 0,
    "is_query_report": 0,
    "label": "Serviecs & Package",
@@ -318,9 +228,119 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "description": "Manage studio bookings and appointments",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Bookings",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking Quotation",
+   "link_count": 0,
+   "link_to": "Booking Quotation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking",
+   "link_count": 0,
+   "link_to": "Booking",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking Invoice",
+   "link_count": 0,
+   "link_to": "Booking Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Operation Order",
+   "link_count": 0,
+   "link_to": "Operation Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "description": "Manage photographers and their schedules",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Photographers",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Photographer",
+   "link_count": 0,
+   "link_to": "Photographer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Photographer Team",
+   "link_count": 0,
+   "link_to": "Photographer Team",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Photographer Schedule",
+   "link_count": 0,
+   "link_to": "Photographer Schedule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Photographer Holiday",
+   "link_count": 0,
+   "link_to": "Photographer Holiday",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Photographer Leave",
+   "link_count": 0,
+   "link_to": "Photographer Leave",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-11-01 18:09:34.663043",
+ "modified": "2025-11-02 23:32:10.474226",
  "modified_by": "Administrator",
  "module": "Re Studio Booking",
  "name": "Re Studio Booking",

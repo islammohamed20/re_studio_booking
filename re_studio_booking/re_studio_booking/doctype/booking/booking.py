@@ -1734,21 +1734,21 @@ def has_permission(doc, ptype, user):
 	"""
 	التحكم في صلاحيات عرض الحجوزات
 	- Administrator: يرى كل شيء
-	- Re Studio Manager, HR Manager: يرون كل شيء
-	- الموظف العادي: يرى حجوزاته فقط
+	- Re Studio Manager: يرى كل شيء
+	- الموظف العادي: يرى حجوزاته فقط (سواء كان current_employee أو owner)
 	"""
 	if user == "Administrator":
 		return True
 	
 	# الأدوار المسموح لها برؤية كل الحجوزات
-	allowed_roles = ["Re Studio Manager", "HR Manager", "System Manager"]
+	allowed_roles = ["Re Studio Manager", "System Manager"]
 	user_roles = frappe.get_roles(user)
 	
 	if any(role in user_roles for role in allowed_roles):
 		return True
 	
-	# الموظف العادي يرى حجوزاته فقط
-	if doc.current_employee == user:
+	# الموظف العادي يرى حجوزاته فقط (current_employee أو owner)
+	if doc.current_employee == user or doc.owner == user:
 		return True
 	
 	return False

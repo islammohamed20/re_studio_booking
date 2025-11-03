@@ -17,6 +17,12 @@ class Lead(Document):
 		# التحقق من وجود بريد إلكتروني أو رقم هاتف
 		if not self.email_id and not self.phone and not self.mobile_no:
 			frappe.throw("يجب إدخال البريد الإلكتروني أو رقم الهاتف على الأقل")
+		
+		# التحقق من صحة البريد الإلكتروني إذا تم إدخاله
+		if self.email_id:
+			from frappe.utils import validate_email_address
+			if not validate_email_address(self.email_id, throw=False):
+				frappe.throw(_("البريد الإلكتروني غير صحيح: {0}").format(self.email_id))
 
 @frappe.whitelist()
 def convert_to_client(lead_name):

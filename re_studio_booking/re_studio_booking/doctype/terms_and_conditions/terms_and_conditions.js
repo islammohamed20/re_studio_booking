@@ -7,6 +7,20 @@ frappe.ui.form.on('Terms and Conditions', {
 		if (frm.is_new() && !frm.doc.terms) {
 			frm.set_value('terms', get_default_terms());
 		}
+		
+		// تحذير عند تفعيل default
+		if (frm.doc.default && !frm.is_new()) {
+			frm.set_df_property('default', 'description', 'سيتم إلغاء تفعيل جميع الشروط الافتراضية الأخرى');
+		}
+	},
+	
+	default: function(frm) {
+		if (frm.doc.default) {
+			frappe.show_alert({
+				message: __('سيتم تعيين هذه الشروط كافتراضية لجميع المستندات'),
+				indicator: 'blue'
+			}, 5);
+		}
 	}
 });
 

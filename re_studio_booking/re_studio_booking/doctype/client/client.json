@@ -51,7 +51,8 @@
    "in_list_view": 1,
    "label": "\u0627\u0633\u0645 \u0627\u0644\u0639\u0645\u064a\u0644",
    "reqd": 1,
-   "unique": 1
+   "unique": 1,
+   "width": "12"
   },
   {
    "allow_in_quick_entry": 1,
@@ -244,7 +245,7 @@
   }
  ],
  "links": [],
- "modified": "2025-11-01 20:13:37.721766",
+ "modified": "2025-11-02 00:02:53.916193",
  "modified_by": "Administrator",
  "module": "Re Studio Booking",
  "name": "Client",
@@ -290,7 +291,7 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "HR Mangaer",
+   "role": "HR Manager",
    "share": 1
   }
  ],

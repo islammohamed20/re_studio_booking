@@ -50,6 +50,19 @@ function aggregate_local_payments(frm) {
 
 frappe.ui.form.on('Booking Invoice', {
 	refresh: function(frm) {
+		// تحميل الشروط الافتراضية للمستندات الجديدة
+		if (frm.is_new() && !frm.doc.tc_name) {
+			frappe.call({
+				method: 're_studio_booking.re_studio_booking.doctype.terms_and_conditions.terms_and_conditions.get_default_terms',
+				callback: function(r) {
+					if (r.message) {
+						frm.set_value('tc_name', r.message.name);
+						frm.set_value('terms', r.message.terms);
+					}
+				}
+			});
+		}
+		
 		// تحديث تاريخ الاستحقاق التالي
 		update_next_due_date(frm);
 		

@@ -33,14 +33,6 @@ frappe.ui.form.on('Lead', {
 		if (frm.is_new() && !frm.doc.lead_owner) {
 			frm.set_value('lead_owner', frappe.session.user);
 		}
-	},
-	
-	email_id: function(frm) {
-		// التحقق من صحة البريد الإلكتروني
-		if (frm.doc.email_id && !frappe.utils.validate_type(frm.doc.email_id, 'email')) {
-			frappe.msgprint(__('البريد الإلكتروني غير صحيح'));
-			frm.set_value('email_id', '');
-		}
 	}
 });
 

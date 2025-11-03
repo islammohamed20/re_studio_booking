@@ -13,26 +13,45 @@ frappe.ui.form.on('Booking', {
 			frm.set_value('current_employee', frappe.session.user);
 		}
 		
-		// إضافة زر "إنشاء فاتورة من الحجز" للحجوزات المحفوظة فقط
-		if (!frm.is_new() && frm.doc.status !== 'Cancelled') {
-			// التحقق من وجود فاتورة مرتبطة بهذا الحجز
-			frappe.db.get_value('Booking Invoice', {'booking': frm.doc.name}, 'name')
-				.then(r => {
-					if (r && r.message && r.message.name) {
-						// إذا كانت هناك فاتورة موجودة، عرض زر للانتقال إليها
-						frm.add_custom_button(__('عرض الفاتورة'), function() {
-							frappe.set_route('Form', 'Booking Invoice', r.message.name);
-						}, __('الفواتير'));
-					} else {
-						// إذا لم تكن هناك فاتورة، عرض زر لإنشائها
-						frm.add_custom_button(__('إنشاء فاتورة من الحجز'), function() {
-							create_invoice_from_booking(frm);
-						}, __('الفواتير'));
+		// تحميل الشروط الافتراضية للمستندات الجديدة
+		if (frm.is_new() && !frm.doc.tc_name) {
+			frappe.call({
+				method: 're_studio_booking.re_studio_booking.doctype.terms_and_conditions.terms_and_conditions.get_default_terms',
+				callback: function(r) {
+					if (r.message) {
+						frm.set_value('tc_name', r.message.name);
+						frm.set_value('terms', r.message.terms);
 					}
-				});
+				}
+			});
 		}
 		
-		// عرض إعدادات الاستديو من General Settings
+	// إضافة زر "إنشاء فاتورة من الحجز" للحجوزات المحفوظة فقط
+	if (!frm.is_new() && frm.doc.status !== 'Cancelled') {
+		// التحقق من وجود فاتورة مرتبطة بهذا الحجز
+		frappe.db.get_value('Booking Invoice', {'booking': frm.doc.name}, 'name')
+			.then(r => {
+				if (r && r.message && r.message.name) {
+					// إذا كانت هناك فاتورة موجودة، عرض زر للانتقال إليها
+					frm.add_custom_button(__('عرض الفاتورة'), function() {
+						frappe.set_route('Form', 'Booking Invoice', r.message.name);
+					}, __('الفواتير'));
+				} else {
+					// إذا لم تكن هناك فاتورة، عرض زر لإنشائها
+					frm.add_custom_button(__('إنشاء فاتورة من الحجز'), function() {
+						create_invoice_from_booking(frm);
+					}, __('الفواتير'));
+				}
+			});
+		
+		// زر إنشاء أمر تشغيل
+		frm.add_custom_button(__('إنشاء أمر تشغيل'), function() {
+			frappe.model.open_mapped_doc({
+				method: 're_studio_booking.re_studio_booking.doctype.operation_order.operation_order.make_operation_order',
+				frm: frm
+			});
+		}, __('إنشاء'));
+	}		// عرض إعدادات الاستديو من General Settings
 		load_studio_settings(frm);
 		
 		// Filter services and packages based on booking type
@@ -229,6 +248,42 @@ frappe.ui.form.on('Booking', {
 			calculate_service_hours(frm);
 			// تحديث كميات الخدمات المختارة
 			update_services_quantity_from_hours(frm);
+		}
+	},
+
+	// تعديل السلوك عند اختيار نوع الطرف
+	party_type: function(frm) {
+		if (frm.doc.party_type === 'Lead') {
+			// تنظيف حقول العميل عند التحويل إلى Lead
+			frm.set_value('client', '');
+			frm.set_value('client_name', '');
+			frm.set_value('client_email', '');
+			frm.set_value('phone', '');
+			frm.set_value('mobile_no', '');
+			frm.set_value('company_name', '');
+			frm.set_intro(__('تم اختيار نوع Lead. الرجاء تحديد العميل المحتمل من الحقل "اسم الطرف"'), 'blue');
+		} else if (frm.doc.party_type === 'Client') {
+			// تنظيف اسم الطرف إذا تم الرجوع إلى Client
+			frm.set_value('party_name', '');
+			frm.set_intro('');
+		}
+	},
+
+	// عند اختيار Lead (party_name)، تعبئة بيانات التواصل تلقائياً
+	party_name: function(frm) {
+		if (frm.doc.party_type === 'Lead' && frm.doc.party_name) {
+			frappe.db.get_value('Lead', frm.doc.party_name, ['email_id', 'phone', 'mobile_no', 'company_name', 'lead_name'])
+				.then(r => {
+					if (r && r.message) {
+						const m = r.message;
+						frm.set_value('client_email', m.email_id || '');
+						frm.set_value('phone', m.phone || m.mobile_no || '');
+						frm.set_value('mobile_no', m.mobile_no || '');
+						frm.set_value('company_name', m.company_name || '');
+						// استخدام اسم الـ Lead للعرض الداخلي
+						frm.set_value('client_name', m.lead_name || frm.doc.party_name);
+					}
+				});
 		}
 	}
 });
